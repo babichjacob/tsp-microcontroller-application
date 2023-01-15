@@ -12,9 +12,14 @@ from .modules import (
 
 
 async def main():
-    # From the proxy module to the preferences module
-    i01_sender, i01_receiver = bounded_channel(32)
+    # Start of creating interfaces
 
+    # From the preferences module to the proxy module
+    i01_1_sender, i01_1_receiver = bounded_channel(32)
+    # From the proxy module to the preferences module
+    i01_2_sender, i01_2_receiver = bounded_channel(32)
+    # TODO: describe
+    i02_sender, i02_receiver = bounded_channel(32)
     # From the human detection module to the activity recognition module
     i03_sender, i03_receiver = bounded_channel(32)
     # From the human detection module to the person identification module
@@ -32,6 +37,8 @@ async def main():
     # From the person identification module to the aggregation module
     i10_sender, i10_receiver = bounded_channel(32)
     # TODO: write description
+    i11_sender, i11_receiver = bounded_channel(32)
+    # TODO: write description
     i12_sender, i12_receiver = bounded_channel(32)
     # From the environment module to the human detection module
     i13_sender, i13_receiver = bounded_channel(32)
@@ -39,6 +46,10 @@ async def main():
     i14_sender, i14_receiver = bounded_channel(32)
     # From the environment module to the control module
     i15_sender, i15_receiver = bounded_channel(32)
+
+    # End of creating interfaces
+
+    # Start of creating module tasks
 
     m01_environment_task = m01_environment.run(
         to_human_detection=i13_sender,
@@ -66,15 +77,41 @@ async def main():
     )
 
     m05_preferences_task = m05_preferences.run(
-        from_proxy_module=i01_receiver,
-        to_proxy_module=i01_sender,
+        from_proxy_module=i01_2_receiver,
+        to_proxy_module=i01_1_sender,
         to_control_module=i07_sender,
     )
 
-    # Run all tasks in parallel
-    # The whole system will shut down
-    # (and automatically restart - when the system is correctly set up)
-    # if any of them encounter an unexpected error
+    # End of creating module tasks
+
+    # Extra references to the channels need to dropped from this function
+    # so that their automatic cleanup behavior behaves correctly
+    # (Probably not actually important for this system's purpose)
+    # Start of dropping extra references
+
+    del i01_1_receiver, i01_1_sender
+    del i01_2_receiver, i01_2_sender
+    del i02_sender, i02_receiver
+    del i03_sender, i03_receiver
+    del i04_sender, i04_receiver
+    del i05_sender, i05_receiver
+    del i06_sender, i06_receiver
+    del i07_sender, i07_receiver
+    del i08_sender, i08_receiver
+    del i09_sender, i09_receiver
+    del i10_sender, i10_receiver
+    del i11_sender, i11_receiver
+    del i12_sender, i12_receiver
+    del i13_sender, i13_receiver
+    del i14_sender, i14_receiver
+    del i15_sender, i15_receiver
+
+    # End of dropping extra references
+
+    # Run all tasks in parallel.
+    # If any of them encounter an unexpected exception,
+    # the whole system will shut down (and automatically restart)
+    # (on the real system, when properly set up, at least)
     await gather(
         m01_environment_task,
         m02_human_detection_task,
