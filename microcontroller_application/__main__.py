@@ -2,12 +2,15 @@ from asyncio import gather
 
 from bounded_channel import bounded_channel
 
+from microcontroller_application.modules import m08_aggregation
+
 from .modules import (
     m01_environment,
     m02_human_detection,
     m03_activity_recognition,
     m04_person_identification,
     m05_preferences,
+    m06_control,
 )
 
 
@@ -82,6 +85,21 @@ async def main():
         to_control_module=i07_sender,
     )
 
+    m06_control_task = m06_control.run(
+        from_activity_recognition=i05_receiver,
+        from_person_identification=i06_receiver,
+        from_environment=i13_receiver,
+        from_preferences=i07_receiver,
+        to_aggregation=i11_sender,
+    )
+
+    m08_aggregation_task = m08_aggregation.run(
+        from_person_identification=i10_receiver,
+        from_control=i11_receiver,
+        from_environment=i15_receiver,
+        to_proxy=i02_sender,
+    )
+
     # End of creating module tasks
 
     # Extra references to the channels need to dropped from this function
@@ -118,6 +136,8 @@ async def main():
         m03_activity_recognition_task,
         m04_person_identification_task,
         m05_preferences_task,
+        m06_control_task,
+        m08_aggregation_task,
     )
 
 

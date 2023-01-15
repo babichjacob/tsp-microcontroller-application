@@ -1,3 +1,8 @@
+"""
+This module is concerned with keeping track
+of each trusted user’s lighting preferences.
+"""
+
 from bounded_channel import Receiver, Sender
 
 from microcontroller_application.interfaces.message_types import (
