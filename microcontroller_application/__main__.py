@@ -1,8 +1,8 @@
+"""The microcontroller application all coming together"""
+
 from asyncio import gather
 
 from bounded_channel import bounded_channel
-
-from microcontroller_application.modules import m08_aggregation
 
 from .modules import (
     m01_environment,
@@ -11,6 +11,7 @@ from .modules import (
     m04_person_identification,
     m05_preferences,
     m06_control,
+    m08_aggregation,
 )
 
 
@@ -21,7 +22,7 @@ async def main():
     i01_1_sender, i01_1_receiver = bounded_channel(32)
     # From the proxy module to the preferences module
     i01_2_sender, i01_2_receiver = bounded_channel(32)
-    # TODO: describe
+    # From the aggregation module to the proxy module
     i02_sender, i02_receiver = bounded_channel(32)
     # From the human detection module to the activity recognition module
     i03_sender, i03_receiver = bounded_channel(32)
@@ -39,15 +40,13 @@ async def main():
     i09_sender, i09_receiver = bounded_channel(32)
     # From the person identification module to the aggregation module
     i10_sender, i10_receiver = bounded_channel(32)
-    # TODO: write description
+    # From the control module to the aggregation module
     i11_sender, i11_receiver = bounded_channel(32)
-    # TODO: write description
-    i12_sender, i12_receiver = bounded_channel(32)
     # From the environment module to the human detection module
     i13_sender, i13_receiver = bounded_channel(32)
     # From the environment module to the control module
     i14_sender, i14_receiver = bounded_channel(32)
-    # From the environment module to the control module
+    # From the environment module to the aggregation module
     i15_sender, i15_receiver = bounded_channel(32)
 
     # End of creating interfaces
@@ -119,7 +118,6 @@ async def main():
     del i09_sender, i09_receiver
     del i10_sender, i10_receiver
     del i11_sender, i11_receiver
-    del i12_sender, i12_receiver
     del i13_sender, i13_receiver
     del i14_sender, i14_receiver
     del i15_sender, i15_receiver
