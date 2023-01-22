@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "tsp-microcontroller-application"
-version = "0.1.0"
-description = ""
+version = "2023.01.21.00"
+description = "The application to run on the microcontroller of our smart home system"
 authors = [
     "J or Jacob Babich <jacobbabichpublic+git@gmail.com>",
     "Evan Cardasis <todoaddtheiremails@example.com>",
@@ -15,6 +15,7 @@ packages = [{ include = "microcontroller_application" }]
 python = "^3.10"
 babichjacob-option-and-result = "^0.1.2"
 babichjacob-bounded-channel = "^0.1.1"
+babichjacob-oneshot-channel = "^0.1.1"
 
 [tool.poetry.dev-dependencies]
 black = "^22.12.0"
@@ -22,7 +23,7 @@ mypy = "^0.991"
 pylint = "^2.15.10"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^6"
+pytest = "^7"
 pytest-asyncio = "^0.20.3"
 
 [build-system]
