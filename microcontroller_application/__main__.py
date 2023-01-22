@@ -16,6 +16,8 @@ from .modules import (
 
 
 async def main():
+    "Run the whole microcontroller part of the system"
+
     # Start of creating interfaces
 
     # From the preferences module to the proxy module

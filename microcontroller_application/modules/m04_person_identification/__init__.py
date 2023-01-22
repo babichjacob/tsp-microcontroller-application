@@ -22,4 +22,6 @@ async def run(
     to_proxy: Sender[FromPersonIdentificationToProxy],
     to_control: Sender[FromPersonIdentificationToControl],
 ):
+    "Run the person identification module"
+
     print("hello from the person identification module")

@@ -1,8 +1,15 @@
+"""
+Type definitions for messages that will be sent
+between modules (actors) across interfaces (channels)
+"""
+
+
 from dataclasses import dataclass
 from typing import Any
 
-# Any is used as a placeholder for all the types we expect
-
+# Any is used as a placeholder for all the types we expect to write at a later time
+# They will use @dataclass and the | operator
+# discussed in the low level design specification document
 
 # Interface 01.1
 FromPreferencesToProxy = Any

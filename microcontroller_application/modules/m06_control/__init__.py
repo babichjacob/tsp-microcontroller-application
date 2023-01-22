@@ -26,4 +26,6 @@ async def run(
     # to_lighting: Sender[FromControlToLighting],
     to_aggregation: Sender[FromControlToAggregation]
 ):
+    "Run the control module"
+
     print("hello from the control module")

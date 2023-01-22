@@ -21,4 +21,6 @@ async def run(
     from_environment: Receiver[FromEnvironmentToAggregation],
     to_proxy: Sender[FromAggregationToProxy],
 ):
+    "Run the aggregation module"
+
     print("hello from the aggregation module")
