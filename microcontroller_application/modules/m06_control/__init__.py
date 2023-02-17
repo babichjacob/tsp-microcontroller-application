@@ -26,4 +26,9 @@ async def run(
     # to_lighting: Sender[FromControlToLighting],
     to_aggregation: Sender[FromControlToAggregation]
 ):
+    # await gather(
+    # TODO: set up tasks to put
+    # the incoming data into a store
+    # )
+
     print("hello from the control module")
