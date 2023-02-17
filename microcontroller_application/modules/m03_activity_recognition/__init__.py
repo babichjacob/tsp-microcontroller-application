@@ -1,5 +1,5 @@
 """
-This module is concerned with categorizing 
+This module is concerned with categorizing
 what each human in the room is doing.
 """
 
@@ -16,4 +16,6 @@ async def run(
     from_human_detection: Receiver[FromHumanDetectionToActivityRecognition],
     to_control: Sender[FromActivityRecognitionToControl],
 ):
+    "Run the activity recognition module"
+
     print("hello from the activity recognition module")

@@ -20,4 +20,6 @@ async def run(
     to_control: Sender[FromEnvironmentToControl],
     to_aggregation: Sender[FromEnvironmentToAggregation],
 ):
+    "Run the environment module"
+
     print("hello from the environment module")

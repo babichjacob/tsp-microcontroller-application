@@ -18,4 +18,6 @@ async def run(
     to_activity_recognition: Sender[FromHumanDetectionToActivityRecognition],
     to_person_identification: Sender[FromHumanDetectionToPersonIdentification],
 ):
+    "Run the human detection module"
+
     print("hello from the human detection module")

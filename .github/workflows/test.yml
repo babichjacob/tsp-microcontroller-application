@@ -27,5 +27,4 @@ jobs:
       - run: poetry install --with test
       - run: poetry run mypy .
       - run: poetry run pytest
-      - run: poetry run python -m doctest --verbose bounded_channel/__init__.py
       # Lints are not checked in this workflow (it doesn't affect how well the package works)

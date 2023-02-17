@@ -18,4 +18,6 @@ async def run(
     to_proxy_module: Sender[FromPreferencesToProxy],
     to_control_module: Sender[FromPreferencesToControl],
 ):
+    "Run the preferences module"
+
     print("hello from the preferences module")

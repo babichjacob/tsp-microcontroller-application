@@ -31,4 +31,6 @@ async def run(
     # the incoming data into a store
     # )
 
+    "Run the control module"
+
     print("hello from the control module")
