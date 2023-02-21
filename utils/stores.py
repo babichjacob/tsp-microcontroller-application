@@ -81,7 +81,7 @@ def derived_with_time(
 
 # TODO: extract to store-tools package
 def values(store: Readable[Value]) -> AsyncGenerator[Value, None]:
-    queue = Queue()
+    queue: Queue[Value] = Queue()
 
     unsubscribe = store.subscribe(queue.put_nowait)
 
