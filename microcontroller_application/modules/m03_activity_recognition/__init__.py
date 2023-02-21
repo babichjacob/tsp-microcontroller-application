@@ -9,6 +9,9 @@ from microcontroller_application.interfaces.message_types import (
     FromActivityRecognitionToControl,
     FromHumanDetectionToActivityRecognition,
 )
+from microcontroller_application.log import get_logger
+
+LOGGER = get_logger(__name__)
 
 
 async def run(
@@ -18,4 +21,5 @@ async def run(
 ):
     "Run the activity recognition module"
 
-    print("hello from the activity recognition module")
+    LOGGER.debug("startup")
+    LOGGER.debug("shutdown")
