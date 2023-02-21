@@ -8,7 +8,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+import numpy as np
 from option_and_result import Option
+from PIL.Image import Image
 
 # Any is used as a placeholder for all the types we expect to write at a later time
 # They will use @dataclass and the | operator
@@ -19,10 +21,10 @@ FromPreferencesToProxy = Any
 # Interface 01.2
 class UserSlot(Enum):
     # The system only has to support 4 users (requirement 3.5.5)
-    One = 1
-    Two = 2
-    Three = 3
-    Four = 4
+    ONE = 1
+    TWO = 2
+    THREE = 3
+    FOUR = 4
 
 
 @dataclass
@@ -33,17 +35,36 @@ class FromProxyToPreferences:
 
 
 # Interface 02
-FromAggregationToProxy = Any
+@dataclass
+class FromAggregationToProxyDutyCycle:
+    duty_cycle: float
+
+
+@dataclass
+class FromAggregationToProxyCameraFrame:
+    frame: Image
+
+    user_ids: list[str]
+
+
 # Interface 03
-FromHumanDetectionToActivityRecognition = Any
+@dataclass
+class FromHumanDetectionToActivityRecognition:
+    images_of_humans: list[np.ndarray]
+
+
 # Interface 04
-FromHumanDetectionToPersonIdentification = Any
+@dataclass
+class FromHumanDetectionToPersonIdentification:
+    images_of_humans: list[np.ndarray]
+
+
 # Interface 05
 class Activity(Enum):
     # These numbers don’t matter; you just have to give enum variants a value
-    Working = 0
-    Lying = 1
-    Neither = 2
+    WORKING = 0
+    LYING = 1
+    NEITHER = 2
 
 
 @dataclass
@@ -107,14 +128,14 @@ class Timer:
 @dataclass
 class Preferences:
     name: str
-    timers: list[Timer]
+    timers: list[Timer]  # sorted by weekday, then day, then hour
 
 
 @dataclass
 class FromPreferencesToControl:
-    "The preferences of each person in the room"
+    "The preferences of all users in the system"
 
-    preferences: list[Preferences]  # sorted by weekday, then day, then hour
+    preferences: dict[UserSlot, Preferences]
 
 
 # Interface 08
@@ -123,12 +144,74 @@ FromProxyToPersonIdentification = Any
 FromPersonIdentificationToProxy = Any
 # Interface 10
 FromPersonIdentificationToAggregation = Any
+
 # Interface 11
-FromControlToAggregation = Any
-# Interface 12
+@dataclass
+class FromControlToAggregationDutyCycle:
+    duty_cycle: float
+
+
+@dataclass
+class FromControlToAggregationPower:
+    watts: float
+
+
+# Interface 12 is not defined here because it exists between the proxy and frontend,
+# so the microcontroller application isn't involved at all
+
+
 # Interface 13
-FromEnvironmentToHumanDetection = Any
+@dataclass
+class FromEnvironmentToHumanDetectionMotion:
+    "Motion sensor state changes"
+
+    new_state: bool  # motion detected is a binary yes/no
+
+
+@dataclass
+class FromEnvironmentToHumanDetectionOccupancy:
+    "Occupancy sensor state changes"
+
+    new_state: bool  # occupancy sensed is a binary yes/no
+
+
+@dataclass
+class FromEnvironmentToHumanDetectionCameraFrame:
+    "Camera feed frames"
+
+    frame: np.ndarray
+
+
 # Interface 14
-FromEnvironmentToControl = Any
+@dataclass
+class FromEnvironmentToControl:
+    ambient_brightness: float
+
+
 # Interface 15
-FromEnvironmentToAggregation = Any
+@dataclass
+class FromEnvironmentToAggregation:
+    "Camera feed frames"
+
+    frame: np.ndarray
+
+
+# Interface 16
+@dataclass
+class FromProxyToAggregationRequestDutyCycle:
+    "Request the current duty cycle of the lights"
+
+
+@dataclass
+class FromProxyToAggregationCameraFeedInterest:
+    "Whether the given user wants to see the live camera feed anymore"
+
+    wants_camera_feed: bool
+    user_id: str
+
+
+@dataclass
+class FromProxyToAggregationRecordTheCamera:
+    "Whether or not the camera should record to the filesystem"
+
+    should_record: bool
