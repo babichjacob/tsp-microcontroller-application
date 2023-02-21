@@ -5,7 +5,7 @@ from microcontroller_application.modules.m06_control.software_components.sc04_du
 )
 
 
-def test_duty_cycle_1():
+def test_duty_cycle_mid_value_1():
     output_lumens = 350
 
     output_dc = convert_lumens_to_duty_cycle(output_lumens)

@@ -14,6 +14,7 @@ def test_nobody_is_there_and_no_preferences_forcing_light_on_1():
     """
 
     calculation = calculate_synthesized_light_brightness(
+        activities=[],
         ambient_light_lumens=0,
         now=datetime.now(),
         people_in_room=[],
@@ -32,6 +33,7 @@ def test_nobody_is_there_and_no_preferences_forcing_light_on_2():
     """
 
     calculation = calculate_synthesized_light_brightness(
+        activities=[],
         ambient_light_lumens=300,
         now=datetime.now(),
         people_in_room=[],
@@ -50,6 +52,7 @@ def test_nobody_is_there_and_no_preferences_forcing_light_on_3():
     """
 
     calculation = calculate_synthesized_light_brightness(
+        activities=[],
         ambient_light_lumens=900,
         now=datetime.now(),
         people_in_room=[],
