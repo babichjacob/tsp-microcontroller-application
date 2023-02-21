@@ -19,9 +19,11 @@
        ```bash
        curl https://pyenv.run | bash
        ```
-   - Then, for either case, **close the terminal entirely and open it again** install Python 3.10.9 with the terminal command
+   - Then, for either case, **close the terminal entirely and open it again** install Python 3.10.9 with the terminal commands
      ```bash
      pyenv install 3.10.9
+
+     pyenv global 3.10.9
      ```
    - **If the setup process above isn't working out**, try using [the official installer](https://www.python.org/downloads/release/python-3109/) if working on the project on your own Windows computer
 
@@ -30,7 +32,7 @@
    - Install it with the terminal command if working on the project on your own Windows computer
 
      ```sh
-     (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+     (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python3 -
      ```
 
    - Install it with the terminal command if working on the project on the Raspberry Pi (or other Linux machine)
