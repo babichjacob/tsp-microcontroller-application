@@ -20,11 +20,13 @@
        curl https://pyenv.run | bash
        ```
    - Then, for either case, **close the terminal entirely and open it again** install Python 3.10.9 with the terminal commands
+
      ```bash
      pyenv install 3.10.9
 
      pyenv global 3.10.9
      ```
+
    - **If the setup process above isn't working out**, try using [the official installer](https://www.python.org/downloads/release/python-3109/) if working on the project on your own Windows computer
 
 2. Poetry
@@ -49,7 +51,11 @@
 
 ## Download the application
 
-1. Run the terminal command `git clone https://github.com/team-second-place/microcontroller-application` in the directory where you want to save the project
+1. **Close and re-open the terminal** in the directory where you want to save the project, then run the terminal command
+
+   ```sh
+   git clone https://github.com/team-second-place/microcontroller-application
+   ```
 
 2. Enter the `microcontroller-application` directory it created
 
