@@ -1,8 +1,50 @@
-from bisect import bisect
+"""
+Module: 06. Control
+Component: 03. Power derivation
+
+This component receives a duty cycle (float ranging from 0.0 to 10)
+from the duty cycle component stating how much light is being outputted.
+
+This component converts this value from a duty cycle to a wattage
+(the amount of power consumed in order to light at that level of brightness)
+through a lookup table with (linear) interpolation.
+"""
+
+
+import bounded_channel
+
+from microcontroller_application.interfaces.message_types import (
+    FromControlToAggregationPower,
+)
+from microcontroller_application.log import get_logger
+from utils.lookup_table import lerp_from_table
+
+from ..message_types import FromDutyCycleToPowerDerivation
+
+LOGGER = get_logger(__name__)
+
+
+async def run(
+    *,
+    from_duty_cycle: bounded_channel.Receiver[FromDutyCycleToPowerDerivation],
+    to_aggregation_power: bounded_channel.Sender[FromControlToAggregationPower],
+):
+    "Run the power derivation software component"
+
+    LOGGER.debug("startup")
+
+    async for message in from_duty_cycle:
+        duty_cycle = message.duty_cycle
+        watts = convert_duty_cycle_to_watts(duty_cycle)
+
+        await to_aggregation_power.send(FromControlToAggregationPower(watts))
+
+    LOGGER.debug("shutdown")
+
 
 # Examples of values that would be found from experimentation
 # TODO: these will be changed after collecting samples
-duty_cycle_to_watts = [
+DUTY_CYCLE_TO_WATTS = [
     (0.0, 0.0),
     (0.2, 3.5),
     (0.4, 5.0),
@@ -10,27 +52,7 @@ duty_cycle_to_watts = [
     (0.8, 8.4),
     (1.0, 10.0),
 ]
-# These will be “hardcoded” written just in the code like this
 
 
-def convert_duty_cycle_to_watts(output_dc: float) -> float:
-    # dc is short for duty cycle, and w is short for watts
-
-    # Binary search to find what this falls between
-    upper_index = bisect(
-        [x[0] for x in duty_cycle_to_watts],
-        output_dc,
-    )
-    # In real code, the bisect function comes from Python’s bisect module
-    lower_index = upper_index - 1
-    # Retrieve values from the table
-    (upper_dc, upper_w) = duty_cycle_to_watts[upper_index]
-    (lower_dc, lower_w) = duty_cycle_to_watts[lower_index]
-    # Start of the linear interpolation algorithm
-    range_ = upper_dc - lower_dc
-    # t is a value between 0 and 1
-    t = (output_dc - lower_dc) / range_
-    # Linearly interpolate to find the approximate value
-    output_w = upper_w * t + lower_w * (1 - t)
-
-    return output_w
+def convert_duty_cycle_to_watts(duty_cycle: float) -> float:
+    return lerp_from_table(DUTY_CYCLE_TO_WATTS, duty_cycle)

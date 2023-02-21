@@ -1,7 +1,58 @@
-from bisect import bisect
+"""
+Module: 06. Control
+Component: 04. Duty cycle
+
+This component receives a light value (in lumens) 
+from the synthesis component stating how much light should be output.
+
+This component converts this value from lumens to a percentage
+(duty cycle) through a lookup table with (linear) interpolation.
+"""
+
+import bounded_channel
+from microcontroller_application.interfaces.message_types import (
+    FromControlToAggregationDutyCycle,
+)
+
+from microcontroller_application.log import get_logger
+from utils.lookup_table import lerp_from_table
+from utils.asynchronous import at_least_one
+
+from ..message_types import FromDutyCycleToPowerDerivation, FromSynthesisToDutyCycle
+
+LOGGER = get_logger(__name__)
+
+
+async def run(
+    *,
+    from_synthesis: bounded_channel.Receiver[FromSynthesisToDutyCycle],
+    to_power_derivation: bounded_channel.Sender[FromDutyCycleToPowerDerivation],
+    to_aggregation_duty_cycle: bounded_channel.Sender[
+        FromControlToAggregationDutyCycle
+    ],
+):
+    "Run the duty cycle software component"
+
+    LOGGER.debug("startup")
+
+    async for message in from_synthesis:
+        lumens = message.lumens
+        duty_cycle = convert_lumens_to_duty_cycle(lumens)
+
+        await at_least_one(
+            [
+                to_power_derivation.send(FromDutyCycleToPowerDerivation(duty_cycle)),
+                to_aggregation_duty_cycle.send(
+                    FromControlToAggregationDutyCycle(duty_cycle)
+                ),
+            ]
+        )
+
+    LOGGER.debug("shutdown")
+
 
 # Examples of values that would be found from experimentation
-lumens_to_duty_cycle = [
+LUMENS_TO_DUTY_CYCLE = [
     (000.0, 0.00),
     (100.0, 0.11),
     (200.0, 0.17),
@@ -13,23 +64,5 @@ lumens_to_duty_cycle = [
 # These will be “hardcoded” written just in the code like this
 
 
-# l is short for lumens, and dc is short for duty cycle
-def convert_lumens_to_duty_cycle(output_l: float) -> float:
-    # Binary search to find what this falls between
-    upper_index = bisect(
-        [x[0] for x in lumens_to_duty_cycle],
-        output_l,
-    )
-    # In real code, the bisect function comes from Python’s bisect module
-    lower_index = upper_index - 1
-    # Retrieve values from the table
-    (upper_l, upper_dc) = lumens_to_duty_cycle[upper_index]
-    (lower_l, lower_dc) = lumens_to_duty_cycle[lower_index]
-    # Start of the linear interpolation algorithm
-    range_ = upper_l - lower_l
-    # t is a value between 0 and 1
-    t = (output_l - lower_l) / range_
-    # Linearly interpolate to find the approximate value
-    output_dc = upper_dc * t + lower_dc * (1 - t)
-
-    return output_dc
+def convert_lumens_to_duty_cycle(lumens: float) -> float:
+    return lerp_from_table(LUMENS_TO_DUTY_CYCLE, lumens)

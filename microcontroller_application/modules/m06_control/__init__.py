@@ -1,36 +1,76 @@
 """
+Module: 06. Control
+
 This module is concerned with deciding, all things considered,
 what brightness the lights in the room should be.
 """
 
 
-from bounded_channel import Receiver, Sender
+from asyncio import gather
+
+import bounded_channel
 
 from microcontroller_application.interfaces.message_types import (
     FromActivityRecognitionToControl,
-    FromControlToAggregation,
+    FromControlToAggregationDutyCycle,
+    FromControlToAggregationPower,
     FromEnvironmentToControl,
     FromPersonIdentificationToControl,
     FromPreferencesToControl,
 )
+from microcontroller_application.log import get_logger
+
+from .software_components import sc02_synthesis, sc03_power_derivation, sc04_duty_cycle
+
+LOGGER = get_logger(__name__)
 
 
 async def run(
     *,
-    from_activity_recognition: Receiver[FromActivityRecognitionToControl],
-    from_person_identification: Receiver[FromPersonIdentificationToControl],
-    from_environment: Receiver[FromEnvironmentToControl],
-    from_preferences: Receiver[FromPreferencesToControl],
+    from_environment: bounded_channel.Receiver[FromEnvironmentToControl],
+    from_activity_recognition: bounded_channel.Receiver[
+        FromActivityRecognitionToControl
+    ],
+    from_person_identification: bounded_channel.Receiver[
+        FromPersonIdentificationToControl
+    ],
+    from_preferences: bounded_channel.Receiver[FromPreferencesToControl],
     # TODO: add a dimmer driver software component to the lighting module and
     # This is actually a hardware interface so it should be removed
     # to_lighting: Sender[FromControlToLighting],
-    to_aggregation: Sender[FromControlToAggregation]
+    to_aggregation_duty_cycle: bounded_channel.Sender[
+        FromControlToAggregationDutyCycle
+    ],
+    to_aggregation_power: bounded_channel.Sender[FromControlToAggregationPower],
 ):
-    # await gather(
-    # TODO: set up tasks to put
-    # the incoming data into a store
-    # )
-
     "Run the control module"
 
-    print("hello from the control module")
+    LOGGER.debug("startup")
+
+    to_duty_cycle, from_synthesis = bounded_channel.bounded_channel(32)
+    to_power_derivation, from_duty_cycle = bounded_channel.bounded_channel(32)
+
+    sc02_synthesis_task = sc02_synthesis.run(
+        from_environment=from_environment,
+        from_activity_recognition=from_activity_recognition,
+        from_person_identification=from_person_identification,
+        from_preferences=from_preferences,
+        to_duty_cycle=to_duty_cycle,
+    )
+    sc03_power_derivation_task = sc03_power_derivation.run(
+        from_duty_cycle=from_duty_cycle,
+        to_aggregation_power=to_aggregation_power,
+    )
+    sc04_duty_cycle_task = sc04_duty_cycle.run(
+        from_synthesis=from_synthesis,
+        to_power_derivation=to_power_derivation,
+        to_aggregation_duty_cycle=to_aggregation_duty_cycle,
+    )
+
+    await gather(
+        sc02_synthesis_task,
+        sc03_power_derivation_task,
+        sc04_duty_cycle_task,
+    )
+
+    LOGGER.debug("shutdown")
