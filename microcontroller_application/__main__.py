@@ -25,7 +25,8 @@ async def main():
     # From the proxy module to the preferences module
     i01_2_sender, i01_2_receiver = bounded_channel(32)
     # From the aggregation module to the proxy module
-    i02_sender, i02_receiver = bounded_channel(32)
+    i02_duty_cycle_sender, i02_duty_cycle_receiver = bounded_channel(32)
+    i02_camera_frame_sender, i02_camera_frame_receiver = bounded_channel(32)
     # From the human detection module to the activity recognition module
     i03_sender, i03_receiver = bounded_channel(32)
     # From the human detection module to the person identification module
@@ -43,26 +44,39 @@ async def main():
     # From the person identification module to the aggregation module
     i10_sender, i10_receiver = bounded_channel(32)
     # From the control module to the aggregation module
-    i11_sender, i11_receiver = bounded_channel(32)
+    i11_duty_cycle_sender, i11_duty_cycle_receiver = bounded_channel(32)
+    i11_power_sender, i11_power_receiver = bounded_channel(32)
     # From the environment module to the human detection module
-    i13_sender, i13_receiver = bounded_channel(32)
+    i13_motion_sender, i13_motion_receiver = bounded_channel(32)
+    i13_occupancy_sender, i13_occupancy_receiver = bounded_channel(32)
+    i13_camera_frame_sender, i13_camera_frame_receiver = bounded_channel(32)
     # From the environment module to the control module
     i14_sender, i14_receiver = bounded_channel(32)
     # From the environment module to the aggregation module
     i15_sender, i15_receiver = bounded_channel(32)
+    # From the proxy module to the aggregation module
+    i16_duty_cycle_sender, i16_duty_cycle_receiver = bounded_channel(32)
+    (
+        i16_camera_feed_interest_sender,
+        i16_camera_feed_interest_receiver,
+    ) = bounded_channel(32)
 
     # End of creating interfaces
 
     # Start of creating module tasks
 
     m01_environment_task = m01_environment.run(
-        to_human_detection=i13_sender,
+        to_human_detection_motion=i13_motion_sender,
+        to_human_detection_occupancy=i13_occupancy_sender,
+        to_human_detection_camera_frame=i13_camera_frame_sender,
         to_control=i14_sender,
         to_aggregation=i15_sender,
     )
 
     m02_human_detection_task = m02_human_detection.run(
-        from_environment=i13_receiver,
+        from_environment_motion=i13_motion_receiver,
+        from_environment_occupancy=i13_motion_receiver,
+        from_environment_camera_frame=i13_motion_receiver,
         to_activity_recognition=i03_sender,
         to_person_identification=i04_sender,
     )
@@ -89,16 +103,20 @@ async def main():
     m06_control_task = m06_control.run(
         from_activity_recognition=i05_receiver,
         from_person_identification=i06_receiver,
-        from_environment=i13_receiver,
+        from_environment=i14_receiver,
         from_preferences=i07_receiver,
-        to_aggregation=i11_sender,
+        to_aggregation_duty_cycle=i11_duty_cycle_sender,
+        to_aggregation_power=i11_power_sender,
     )
 
     m08_aggregation_task = m08_aggregation.run(
         from_person_identification=i10_receiver,
-        from_control=i11_receiver,
+        from_control_duty_cycle=i11_duty_cycle_receiver,
         from_environment=i15_receiver,
-        to_proxy=i02_sender,
+        from_proxy_request_duty_cycle=i16_duty_cycle_receiver,
+        from_proxy_camera_feed_interest=i16_camera_feed_interest_receiver,
+        to_proxy_camera_frame=i02_camera_frame_sender,
+        to_proxy_duty_cycle=i02_duty_cycle_sender,
     )
 
     # End of creating module tasks
@@ -110,7 +128,8 @@ async def main():
 
     del i01_1_receiver, i01_1_sender
     del i01_2_receiver, i01_2_sender
-    del i02_sender, i02_receiver
+    del i02_duty_cycle_sender, i02_duty_cycle_receiver
+    del i02_camera_frame_sender, i02_camera_frame_receiver
     del i03_sender, i03_receiver
     del i04_sender, i04_receiver
     del i05_sender, i05_receiver
@@ -119,10 +138,15 @@ async def main():
     del i08_sender, i08_receiver
     del i09_sender, i09_receiver
     del i10_sender, i10_receiver
-    del i11_sender, i11_receiver
-    del i13_sender, i13_receiver
+    del i11_duty_cycle_sender, i11_duty_cycle_receiver
+    del i11_power_sender, i11_power_receiver
+    del i13_motion_sender, i13_motion_receiver
+    del i13_occupancy_sender, i13_occupancy_receiver
+    del i13_camera_frame_sender, i13_camera_frame_receiver
     del i14_sender, i14_receiver
     del i15_sender, i15_receiver
+    del i16_duty_cycle_sender, i16_duty_cycle_receiver
+    del i16_camera_feed_interest_sender, i16_camera_feed_interest_receiver
 
     # End of dropping extra references
 
