@@ -27,10 +27,16 @@
 
 2. Poetry
 
-   - Install it with the terminal command
-     ```sh
-     curl -sSL https://install.python-poetry.org | python3 -
-     ```
+- Install it with the terminal command if working on the project on your own Windows computer
+
+  ```sh
+  (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+  ```
+
+- Install it with the terminal command if working on the project on the Raspberry Pi (or other Linux machine)
+  ```sh
+  curl -sSL https://install.python-poetry.org | python3 -
+  ```
 
 3. Git
 
