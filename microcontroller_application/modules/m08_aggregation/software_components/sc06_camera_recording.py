@@ -1,20 +1,21 @@
-"Camera recording component"
+"""
+Module: 08. Aggregation
+Component: 06. Camera recording
+"""
 
 from asyncio import Event, gather
-from microcontroller_application.log import get_logger
+from datetime import datetime
 from pathlib import Path
+from typing import Callable
 
 import bounded_channel
-
-from datetime import datetime
-
-from microcontroller_application.interfaces.message_types import (
-    FromProxyToAggregationRecordTheCamera,
-    FromEnvironmentToAggregation,
-)
-
 from PIL import Image
 
+from microcontroller_application.interfaces.message_types import (
+    FromEnvironmentToAggregation,
+    FromProxyToAggregationRecordTheCamera,
+)
+from microcontroller_application.log import get_logger
 
 LOGGER = get_logger(__name__)
 
@@ -25,8 +26,11 @@ async def run(
     from_proxy_record_the_camera: bounded_channel.Receiver[
         FromProxyToAggregationRecordTheCamera
     ],
+    get_current_time: Callable[[], datetime],
     history_folder: Path,
 ):
+    "Run the camera recording component"
+
     LOGGER.debug("startup")
 
     recording = Event()
@@ -38,6 +42,7 @@ async def run(
         ),
         record_camera_feed(
             from_environment=from_environment,
+            get_current_time=get_current_time,
             history_folder=history_folder,
             recording=recording,
         ),
@@ -63,6 +68,7 @@ async def receive_proxy_messages(
 async def record_camera_feed(
     *,
     from_environment: bounded_channel.Receiver[FromEnvironmentToAggregation],
+    get_current_time: Callable[[], datetime],
     history_folder: Path,
     recording: Event,
 ):
@@ -75,8 +81,11 @@ async def record_camera_feed(
 
         # A recording has just been started this frame
         if recording_folder is None:
+            now = get_current_time()
+
+            LOGGER.info("starting a camera recording session for %s", now)
+
             # TODO: switch to Option rather than a bare None
-            now = datetime.now()
             recording_folder = (
                 history_folder
                 / str(now.year)
@@ -88,6 +97,8 @@ async def record_camera_feed(
                 / str(now.second)
             )
 
+            recording_folder.mkdir(exist_ok=True, parents=True)
+
         # Grab the current camera frame
         environment_message_option = await from_environment.recv()
         environment_message = (
@@ -98,7 +109,10 @@ async def record_camera_feed(
         # Convert the frame (a numpy array) to a displayable image
         image = Image.fromarray(frame)
         # Save the image in the recording folder with the frame number as the name
-        image.save(f"{frame}.jpeg")
+        destination = recording_folder / f"{frame_number}.jpeg"
+        image.save(destination, quality=90)
+
+        LOGGER.info("saved current frame to %s", destination)
 
         frame_number += 1
 

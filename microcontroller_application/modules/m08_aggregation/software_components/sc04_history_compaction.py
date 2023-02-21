@@ -3,10 +3,12 @@ Module: 08. Aggregation
 Component: 04. History compaction
 """
 
+from asyncio import gather
 import csv
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import Callable
 
 import bounded_channel
 from option_and_result import NONE, Option, Some
@@ -14,19 +16,51 @@ from option_and_result import NONE, Option, Some
 from microcontroller_application.interfaces.message_types import (
     FromControlToAggregationDutyCycle,
 )
+from microcontroller_application.log import get_logger
+
+LOGGER = get_logger(__name__)
 
 
 async def run(
     *,
-    from_control: bounded_channel.Receiver[FromControlToAggregationDutyCycle],
+    from_control_duty_cycle: bounded_channel.Receiver[
+        FromControlToAggregationDutyCycle
+    ],
+    get_current_time: Callable[[], datetime],
     history_folder: Path,
 ):
+    "Run the history compaction software component"
+
+    LOGGER.debug("startup")
+
+    save_duty_cycle_task = run_save_duty_cycle(
+        from_control_duty_cycle=from_control_duty_cycle,
+        get_current_time=get_current_time,
+        history_folder=history_folder,
+    )
+
+    await gather(
+        save_duty_cycle_task,
+    )
+
+    LOGGER.debug("shutdown")
+
+
+async def run_save_duty_cycle(
+    *,
+    from_control_duty_cycle: bounded_channel.Receiver[
+        FromControlToAggregationDutyCycle
+    ],
+    get_current_time: Callable[[], datetime],
+    history_folder: Path,
+):
+
     last_bucket: Option[LightBucket] = NONE()
-    async for message in from_control:
+    async for message in from_control_duty_cycle:
         this_bucket = bucket(message.duty_cycle)
 
         if this_bucket != last_bucket:
-            now = datetime.now()
+            now = get_current_time()
             year = now.year
             month = now.month
             day = now.day
