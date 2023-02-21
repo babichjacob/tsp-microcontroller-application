@@ -19,7 +19,7 @@
        ```bash
        curl https://pyenv.run | bash
        ```
-   - Then, for either case, install Python 3.10.9 with the terminal command
+   - Then, for either case, **close the terminal entirely and open it again** install Python 3.10.9 with the terminal command
      ```bash
      pyenv install 3.10.9
      ```
