@@ -10,6 +10,9 @@ from microcontroller_application.interfaces.message_types import (
     FromPreferencesToProxy,
     FromProxyToPreferences,
 )
+from microcontroller_application.log import get_logger
+
+LOGGER = get_logger(__name__)
 
 
 async def run(
@@ -20,4 +23,6 @@ async def run(
 ):
     "Run the preferences module"
 
-    print("hello from the preferences module")
+    LOGGER.debug("startup")
+
+    LOGGER.debug("shutdown")
