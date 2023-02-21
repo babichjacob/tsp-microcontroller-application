@@ -30,7 +30,7 @@ def lerp_from_table(table: list[tuple[float, float]], value: float) -> float:
 
         raise ValueError(
             f"{value} could not be linearly interpreted from the table "
-            f"because it is less than {table[0][0]} (the smallest entry in the table)"
+            f"because it is less than {lowest_value} (the smallest entry in the table)"
         )
     if upper_index >= len(table):
         highest_value, highest_output = table[-1]
@@ -40,7 +40,7 @@ def lerp_from_table(table: list[tuple[float, float]], value: float) -> float:
 
         raise ValueError(
             f"{value} could not be linearly interpreted from the table "
-            f"because it is greater than {table[len(table)-1][0]} (the largest entry in the table)"
+            f"because it is greater than {highest_value} (the largest entry in the table)"
         )
 
     lower_index = upper_index - 1
@@ -54,6 +54,6 @@ def lerp_from_table(table: list[tuple[float, float]], value: float) -> float:
     # t is a value between 0 and 1
     t = (value - lower_value) / range_
     # Linearly interpolate to find the approximate value
-    output_w = upper_output * t + lower_output * (1 - t)
+    output = upper_output * t + lower_output * (1 - t)
 
-    return output_w
+    return output
