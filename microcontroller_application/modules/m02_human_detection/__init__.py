@@ -1,9 +1,12 @@
 """
+Module: 02. Human detection
+
 This module is concerned with determining how many humans
 are present in the room and where they are.
 """
 
 from asyncio import gather
+
 from bounded_channel import Receiver, Sender
 
 from microcontroller_application.interfaces.message_types import (
