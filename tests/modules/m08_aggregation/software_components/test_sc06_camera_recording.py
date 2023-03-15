@@ -1,7 +1,7 @@
 """
 Unit test
 Module: 08. Aggregation
-Component: 0
+Component: 06. Camera recording
 """
 
 from asyncio import create_task, sleep
@@ -140,7 +140,7 @@ async def test_camera_recording_01():
 
         difference = input_image_hash - output_image_hash
 
-        threshold = 20
+        threshold = 15
 
         assert (
             difference < threshold
