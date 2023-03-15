@@ -38,9 +38,14 @@
      ```
 
    - Install it with the terminal command if working on the project on the Raspberry Pi (or other Linux machine)
+
      ```sh
      curl -sSL https://install.python-poetry.org | python3 -
      ```
+
+   - Then Google how to update the `PATH` environment variable:
+     - `%APPDATA%\Python\Scripts` when working on the project on your Windows computer
+     - `$HOME/.local/bin` when working on the project on the Raspberry Pi
 
 3. Git
 
