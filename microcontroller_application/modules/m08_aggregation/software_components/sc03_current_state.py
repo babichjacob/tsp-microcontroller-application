@@ -1,6 +1,20 @@
 """
 Module: 08. Aggregation
 Component: 03. Current state
+
+The control module gives an output light amount
+(a decimal duty cycle) as it changes.
+
+Whenever a user browsing the site
+(as learned by a message from the proxy module)
+wants to see the current duty cycle, it is given.
+
+
+It's a similar story with the camera feed from the environment module.
+
+When requested (from the proxy module
+(because of a user request while browsing the frontend website)
+), it is given.
 """
 
 
@@ -38,6 +52,8 @@ async def run(
     to_proxy_camera_frame: bounded_channel.Sender[FromAggregationToProxyCameraFrame],
     to_proxy_duty_cycle: bounded_channel.Sender[FromAggregationToProxyDutyCycle],
 ):
+    "Run the current state software component"
+
     LOGGER.debug("startup")
 
     await gather(

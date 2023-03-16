@@ -5,6 +5,7 @@ between modules (actors) across interfaces (channels)
 
 
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -17,7 +18,14 @@ from PIL.Image import Image
 # discussed in the low level design specification document
 
 # Interface 01.1
-FromPreferencesToProxy = Any
+@dataclass
+class FromPreferencesToProxy:
+    # So the proxy module knows which user to forward the message to
+    user_id: str
+    # The Preferences definition from 4.3.7 (below)
+    preferences: "Preferences"
+
+
 # Interface 01.2
 class UserSlot(Enum):
     # The system only has to support 4 users (requirement 3.5.5)
@@ -30,7 +38,7 @@ class UserSlot(Enum):
 @dataclass
 class FromProxyToPreferences:
     user_slot: UserSlot
-    # The Preferences definition from 4.3.7 (below)
+    # The Preferences definition from  interface 07 (below)
     preferences: "Preferences"
 
 
@@ -45,6 +53,55 @@ class FromAggregationToProxyCameraFrame:
     frame: Image
 
     user_ids: list[str]
+
+
+@dataclass
+class Time:
+    hour: int
+    minute: int
+    second: int
+
+
+@dataclass
+class TimelineEventBrightness:
+    time: Time
+    bucket: Any  # TODO: extract out the type definition for this from the history compaction component
+
+
+@dataclass
+class TimelineEventEnergy:
+    time: Time
+    energy: float
+
+
+@dataclass
+class TimelineEventIntruder:
+    time: Time
+    intruder_alert: Any  # TODO: I think it should be a photo
+
+
+TimelineEvent = TimelineEventBrightness | TimelineEventEnergy | TimelineEventIntruder
+
+
+@dataclass
+class Date:
+    year: int
+    month: int
+    day: int
+
+
+@dataclass
+class FromProxyToAggregationHistoryRequest:
+    date: Date
+
+    user_id: str
+
+
+@dataclass
+class FromAggregationToProxyHistory:
+    timeline: list[TimelineEvent]
+
+    user_id: str
 
 
 # Interface 03
@@ -140,10 +197,24 @@ class FromPreferencesToControl:
 
 # Interface 08
 FromProxyToPersonIdentification = Any
+
 # Interface 09
-FromPersonIdentificationToProxy = Any
+@dataclass
+class FromPersonIdentificationToProxy:
+    "An intruder alert"
+
+    image: Image
+    timestamp: datetime
+
+
 # Interface 10
-FromPersonIdentificationToAggregation = Any
+@dataclass
+class FromPersonIdentificationToAggregation:
+    "An intruder alert"
+
+    image: Image
+    timestamp: datetime
+
 
 # Interface 11
 @dataclass
@@ -198,16 +269,16 @@ class FromEnvironmentToAggregation:
 
 # Interface 16
 @dataclass
-class FromProxyToAggregationRequestDutyCycle:
-    "Request the current duty cycle of the lights"
-
-
-@dataclass
 class FromProxyToAggregationCameraFeedInterest:
     "Whether the given user wants to see the live camera feed anymore"
 
     wants_camera_feed: bool
     user_id: str
+
+
+@dataclass
+class FromProxyToAggregationRequestDutyCycle:
+    "Request the current duty cycle of the lights"
 
 
 @dataclass

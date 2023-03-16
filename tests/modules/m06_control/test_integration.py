@@ -19,7 +19,7 @@ from microcontroller_application.modules import m06_control
 
 
 @pytest.mark.asyncio
-async def TODO_test_integration_1():
+async def test_integration_1():
     i05_sender, i05_receiver = bounded_channel(32)
     i06_sender, i06_receiver = bounded_channel(32)
     i07_sender, i07_receiver = bounded_channel(32)

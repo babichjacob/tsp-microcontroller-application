@@ -123,7 +123,7 @@ async def record_camera_feed(
 
             # Assemble a video from the captured frames
             await assemble_video(
-                all_frames, recording_folder / "video.mkv"  # Inputs  # Output
+                all_frames, recording_folder / "video.mkv"
             )
 
             # Reset the recording information

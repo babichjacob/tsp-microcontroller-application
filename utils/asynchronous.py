@@ -1,3 +1,5 @@
+"""Utilities for working with async things"""
+
 from asyncio import CancelledError, create_task, wait, FIRST_COMPLETED
 from typing import Any, Coroutine
 

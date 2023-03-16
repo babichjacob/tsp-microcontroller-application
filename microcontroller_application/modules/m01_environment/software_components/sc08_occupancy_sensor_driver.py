@@ -22,7 +22,9 @@ LOGGER = get_logger(__name__)
 
 async def run(
     *,
-    to_human_detection: bounded_channel.Sender[FromEnvironmentToHumanDetectionOccupancy],
+    to_human_detection: bounded_channel.Sender[
+        FromEnvironmentToHumanDetectionOccupancy
+    ],
 ):
     LOGGER.debug("startup")
 

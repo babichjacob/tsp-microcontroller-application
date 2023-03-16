@@ -12,7 +12,11 @@ from .modules import (
     m05_preferences,
     m06_control,
     m08_aggregation,
+    m09x_proxy_connector,
 )
+
+PROXY_ENDPOINT = "wss://150.230.176.164.nip.io/microcontroller"
+MICROCONTROLLER_ID = "rpi_b4yw87u789ejhdu"
 
 
 async def main():
@@ -27,6 +31,7 @@ async def main():
     # From the aggregation module to the proxy module
     i02_duty_cycle_sender, i02_duty_cycle_receiver = bounded_channel(32)
     i02_camera_frame_sender, i02_camera_frame_receiver = bounded_channel(32)
+    i02_history_sender, i02_history_receiver = bounded_channel(32)
     # From the human detection module to the activity recognition module
     i03_sender, i03_receiver = bounded_channel(32)
     # From the human detection module to the person identification module
@@ -55,11 +60,13 @@ async def main():
     # From the environment module to the aggregation module
     i15_sender, i15_receiver = bounded_channel(32)
     # From the proxy module to the aggregation module
-    i16_duty_cycle_sender, i16_duty_cycle_receiver = bounded_channel(32)
     (
         i16_camera_feed_interest_sender,
         i16_camera_feed_interest_receiver,
     ) = bounded_channel(32)
+    i16_request_history_sender, i16_request_history_receiver = bounded_channel(32)
+    i16_request_duty_cycle_sender, i16_request_duty_cycle_receiver = bounded_channel(32)
+    i16_record_the_camera_sender, i16_record_the_camera_receiver = bounded_channel(32)
 
     # End of creating interfaces
 
@@ -95,9 +102,9 @@ async def main():
     )
 
     m05_preferences_task = m05_preferences.run(
-        from_proxy_module=i01_2_receiver,
-        to_proxy_module=i01_1_sender,
-        to_control_module=i07_sender,
+        from_proxy=i01_2_receiver,
+        to_proxy=i01_1_sender,
+        to_control=i07_sender,
     )
 
     m06_control_task = m06_control.run(
@@ -113,10 +120,27 @@ async def main():
         from_person_identification=i10_receiver,
         from_control_duty_cycle=i11_duty_cycle_receiver,
         from_environment=i15_receiver,
-        from_proxy_request_duty_cycle=i16_duty_cycle_receiver,
         from_proxy_camera_feed_interest=i16_camera_feed_interest_receiver,
+        from_proxy_request_history=i16_request_history_receiver,
+        from_proxy_record_the_camera=i16_record_the_camera_receiver,
+        from_proxy_request_duty_cycle=i16_request_duty_cycle_receiver,
         to_proxy_camera_frame=i02_camera_frame_sender,
         to_proxy_duty_cycle=i02_duty_cycle_sender,
+        to_proxy_history=i02_history_sender,
+    )
+
+    m09x_proxy_connector_task = m09x_proxy_connector.run(
+        from_aggregation_camera_frame=i02_camera_frame_receiver,
+        from_aggregation_duty_cycle=i02_duty_cycle_receiver,
+        from_person_identification=i09_receiver,
+        from_preferences=i01_1_receiver,
+        to_aggregation_camera_feed_interest=i16_camera_feed_interest_sender,
+        to_aggregation_record_the_camera=i16_record_the_camera_sender,
+        to_aggregation_request_duty_cycle=i16_request_duty_cycle_sender,
+        to_person_identification=i08_sender,
+        to_preferences=i01_2_sender,
+        microcontroller_id=MICROCONTROLLER_ID,
+        proxy_endpoint=PROXY_ENDPOINT,
     )
 
     # End of creating module tasks
@@ -130,6 +154,7 @@ async def main():
     del i01_2_receiver, i01_2_sender
     del i02_duty_cycle_sender, i02_duty_cycle_receiver
     del i02_camera_frame_sender, i02_camera_frame_receiver
+    del i02_history_sender, i02_history_receiver
     del i03_sender, i03_receiver
     del i04_sender, i04_receiver
     del i05_sender, i05_receiver
@@ -145,8 +170,10 @@ async def main():
     del i13_camera_frame_sender, i13_camera_frame_receiver
     del i14_sender, i14_receiver
     del i15_sender, i15_receiver
-    del i16_duty_cycle_sender, i16_duty_cycle_receiver
     del i16_camera_feed_interest_sender, i16_camera_feed_interest_receiver
+    del i16_request_duty_cycle_sender, i16_request_duty_cycle_receiver
+    del i16_request_history_sender, i16_request_history_receiver
+    del i16_record_the_camera_sender, i16_record_the_camera_receiver
 
     # End of dropping extra references
 
@@ -162,6 +189,7 @@ async def main():
         m05_preferences_task,
         m06_control_task,
         m08_aggregation_task,
+        m09x_proxy_connector_task,
     )
 
 

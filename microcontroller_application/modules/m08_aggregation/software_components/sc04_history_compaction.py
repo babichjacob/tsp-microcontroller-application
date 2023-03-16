@@ -1,10 +1,17 @@
 """
 Module: 08. Aggregation
 Component: 04. History compaction
+
+The control module gives an output light amount at all times.
+The entirety of all historical data is impractical to save.
+
+To figure out what's significant enough to save, 
+we just check if it resulted in more than a 25% difference in light output.
+This is achieved by first “bucketing” the values
 """
 
-from asyncio import gather
 import csv
+from asyncio import gather
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -58,8 +65,9 @@ async def run_save_duty_cycle(
     last_bucket: Option[LightBucket] = NONE()
     async for message in from_control_duty_cycle:
         this_bucket = bucket(message.duty_cycle)
+        some_this_bucket = Some(this_bucket)
 
-        if this_bucket != last_bucket:
+        if some_this_bucket != last_bucket:
             now = get_current_time()
             year = now.year
             month = now.month
@@ -71,7 +79,6 @@ async def run_save_duty_cycle(
             )
             # Open the file in append mode
             with open(today_s_history_file_path, "a", encoding="utf8") as history_file:
-
                 writer = csv.writer(history_file)
 
                 writer.writerow(
@@ -84,7 +91,7 @@ async def run_save_duty_cycle(
                 )
             # Reference: https://stackoverflow.com/a/37654233
 
-        last_bucket = Some(this_bucket)
+        last_bucket = some_this_bucket
 
 
 class LightBucket(Enum):

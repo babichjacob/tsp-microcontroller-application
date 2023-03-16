@@ -17,12 +17,15 @@ LOGGER = get_logger(__name__)
 
 async def run(
     *,
-    from_proxy_module: Receiver[FromProxyToPreferences],
-    to_proxy_module: Sender[FromPreferencesToProxy],
-    to_control_module: Sender[FromPreferencesToControl],
+    from_proxy: Receiver[FromProxyToPreferences],
+    to_proxy: Sender[FromPreferencesToProxy],
+    to_control: Sender[FromPreferencesToControl],
 ):
     "Run the preferences module"
 
     LOGGER.debug("startup")
+
+    # TODO
+    LOGGER.error("this hasn't been programmed yet, so it doesn't do anything")
 
     LOGGER.debug("shutdown")
