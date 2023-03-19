@@ -5,7 +5,7 @@ from operator import lshift
 from typing import Any, AsyncGenerator, Callable, Optional
 
 from option_and_result import NONE, Option
-from store import Args, DerivedValue, Readable, Value, readable
+from store import DerivedValue, Readable, Value, readable
 
 
 def no_op():
@@ -14,7 +14,7 @@ def no_op():
 
 def derived_with_time(
     stores: list[Readable[Any]],
-    derivation: Callable[Args, DerivedValue],
+    derivation: Callable[..., DerivedValue],
     get_max_period: Callable[[], timedelta],
     *,
     loop: AbstractEventLoop,
