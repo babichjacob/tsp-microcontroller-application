@@ -7,14 +7,14 @@ between modules (actors) across interfaces (channels)
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Union
 
 import numpy as np
 from option_and_result import Option
 from PIL.Image import Image
 
 # Any is used as a placeholder for all the types we expect to write at a later time
-# They will use @dataclass and the | operator
+# They will use @dataclass and the | operator (actually Union because of Python version requirements)
 # discussed in the low level design specification document
 
 # Interface 01.1
@@ -80,7 +80,7 @@ class TimelineEventIntruder:
     intruder_alert: Any  # TODO: I think it should be a photo
 
 
-TimelineEvent = TimelineEventBrightness | TimelineEventEnergy | TimelineEventIntruder
+TimelineEvent = Union[TimelineEventBrightness, TimelineEventEnergy, TimelineEventIntruder]
 
 
 @dataclass
@@ -171,7 +171,7 @@ class LightEffectForceEndBrightness:
 
 
 # A light effect can be either of these two
-LightEffect = LightEffectDesiredBrightness | LightEffectForceEndBrightness
+LightEffect = Union[LightEffectDesiredBrightness, LightEffectForceEndBrightness]
 
 
 @dataclass
