@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tsp-microcontroller-application"
-version = "2023.03.19.00"
+version = "2023.03.19.01"
 description = "The application to run on the microcontroller of our smart home system"
 authors = [
     "J or Jacob Babich <jacobbabichpublic+git@gmail.com>",
