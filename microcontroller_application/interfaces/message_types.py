@@ -80,7 +80,9 @@ class TimelineEventIntruder:
     intruder_alert: Any  # TODO: I think it should be a photo
 
 
-TimelineEvent = Union[TimelineEventBrightness, TimelineEventEnergy, TimelineEventIntruder]
+TimelineEvent = Union[
+    TimelineEventBrightness, TimelineEventEnergy, TimelineEventIntruder
+]
 
 
 @dataclass

@@ -2,7 +2,6 @@ from asyncio import Event, gather, sleep, to_thread
 
 import bounded_channel
 import numpy as np
-from option_and_result import MatchesNone, MatchesSome
 
 from microcontroller_application.interfaces.message_types import (
     FromEnvironmentToHumanDetectionCameraFrame,
@@ -46,7 +45,6 @@ if False:
     # print("NLP modules: ", dir(tfm.nlp))
     # print("Vision modules: ", dir(tfm.vision))
 
-
     def load_image_into_numpy_array(path):
         """Load an image from file into a numpy array.
 
@@ -63,8 +61,9 @@ if False:
         img_data = tf.io.gfile.GFile(path, "rb").read()
         image = Image.open(BytesIO(img_data))
         (im_width, im_height) = image.size
-        return np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
-
+        return (
+            np.array(image.getdata()).reshape((im_height, im_width, 3)).astype(np.uint8)
+        )
 
     def get_keypoint_tuples(eval_config):
         """Return a tuple list of keypoint edges from the eval config.
@@ -81,7 +80,6 @@ if False:
             tuple_list.append((edge.start, edge.end))
         return tuple_list
 
-
     MODEL_NAME = "centernet_hg104_512x512_kpts_coco17_tpu-32"
     pipeline_config = "models/research/object_detection/configs/tf2/centernet_hourglass104_512x512_coco17_tpu-8.config"
     model_dir = "models/research/object_detection/test_data/checkpoint/"
@@ -94,7 +92,6 @@ if False:
     # Restore checkpoint
     ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
     ckpt.restore(os.path.join(model_dir, "ckpt-0")).expect_partial()
-
 
     def get_model_detection_function(model):
         """Get a tf.function for detection."""
@@ -111,9 +108,7 @@ if False:
 
         return detect_fn
 
-
     detect_fn = get_model_detection_function(detection_model)
-
 
     # label_map_path = configs['eval_input_config'].label_map_path
     label_map_path = "models/research/object_detection/data/mscoco_label_map.pbtxt"
@@ -137,14 +132,12 @@ if False:
     # workaround to deal with np arrays being uncomparable
     Wrapped = TypeVar("Wrapped")
 
-
     @dataclass(eq=False)
     class Wrapper(Generic[Wrapped]):
         value: Wrapped
 
         def __eq__(self, other):
             return self is other
-
 
     def draw(data: Data):
         # print(f"{data=}")
@@ -177,7 +170,9 @@ if False:
             print(
                 image,
                 detections["detection_boxes"][0].numpy(),
-                (detections["detection_classes"][0].numpy() + label_id_offset).astype(int),
+                (detections["detection_classes"][0].numpy() + label_id_offset).astype(
+                    int
+                ),
                 detections["detection_scores"][0].numpy(),
                 category_index,
                 keypoints,
@@ -185,14 +180,15 @@ if False:
                 f"{keypoint_edges=}",
             )
 
-
     def collect(*args) -> tuple:
         return args
 
     def classify(frame: Frame):
         image_np = frame
 
-        input_tensor = tf.convert_to_tensor(np.expand_dims(image_np, 0), dtype=tf.float32)
+        input_tensor = tf.convert_to_tensor(
+            np.expand_dims(image_np, 0), dtype=tf.float32
+        )
         print("running detect function")
         detections, _predictions_dict, _shapes = detect_fn(input_tensor)
         print("after running detect function")
@@ -215,7 +211,6 @@ if False:
                 )
             )
         )
-
 
     async def main():
         labels_path = tf.keras.utils.get_file(
@@ -349,37 +344,38 @@ async def do_human_detection_when_triggered(
             await from_environment_camera_frame.recv()
         )  # TODO: switch to the pusher/puller thing I need to make
 
-        match message_option.to_matchable():
-            case MatchesNone():
-                break
-            case MatchesSome(message):
-                image = message.frame
+        if message_option.is_none():
+            break
 
-                # This is a long (multi-second) astoundingly computationally expensive process
-                # so calling it is sent to a new thread to prevent blocking the main thread.
-                # Tasks are cooperatively scheduled, so diligence like this is needed.
-                images_of_humans = await to_thread(do_human_detection, image)
-                # do_human_detection is defined in the next code sample
+        message = message_option.unwrap()
 
-                # events remain set until cleared
-                requested_human_detection.clear()
-                # clearing it now means that another human detection request can be serviced
-                # next loop around (i.e. right after either one of these messages is sent:)
+        image = message.frame
 
-                to_activity_recognition_message = (
-                    FromHumanDetectionToActivityRecognition(images_of_humans)
-                )
+        # This is a long (multi-second) astoundingly computationally expensive process
+        # so calling it is sent to a new thread to prevent blocking the main thread.
+        # Tasks are cooperatively scheduled, so diligence like this is needed.
+        images_of_humans = await to_thread(do_human_detection, image)
+        # do_human_detection is defined in the next code sample
 
-                to_person_identification_message = (
-                    FromHumanDetectionToPersonIdentification(images_of_humans)
-                )
+        # events remain set until cleared
+        requested_human_detection.clear()
+        # clearing it now means that another human detection request can be serviced
+        # next loop around (i.e. right after either one of these messages is sent:)
 
-                await at_least_one(
-                    [
-                        to_activity_recognition.send(to_activity_recognition_message),
-                        to_person_identification.send(to_person_identification_message),
-                    ]
-                )
+        to_activity_recognition_message = FromHumanDetectionToActivityRecognition(
+            images_of_humans
+        )
+
+        to_person_identification_message = FromHumanDetectionToPersonIdentification(
+            images_of_humans
+        )
+
+        await at_least_one(
+            [
+                to_activity_recognition.send(to_activity_recognition_message),
+                to_person_identification.send(to_person_identification_message),
+            ]
+        )
 
 
 def do_human_detection(image: np.ndarray):

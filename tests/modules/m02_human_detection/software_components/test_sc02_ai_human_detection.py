@@ -24,8 +24,6 @@ TEST_DATA_FOLDER = MODULE_FOLDER / "test_data"
 LOGGER = get_logger(__name__)
 
 
-
-
 def test_no_humans():
     # TODO: load image with no humans in it into memory
     input_data = None

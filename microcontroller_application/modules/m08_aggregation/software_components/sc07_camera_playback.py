@@ -10,6 +10,7 @@ from microcontroller_application.log import get_logger
 
 LOGGER = get_logger(__name__)
 
+
 async def run(
     # TODO: what arguments is this supposed to have?
 ):

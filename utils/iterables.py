@@ -1,6 +1,6 @@
 from typing import Callable, Iterator, Iterable, TypeVar
 
-from option_and_result import MatchesNone, MatchesSome, NONE, Option, Some
+from option_and_result import NONE, Option, Some
 
 
 def average(numbers: Iterable[float]) -> Option[float]:
@@ -11,11 +11,10 @@ def average(numbers: Iterable[float]) -> Option[float]:
         total += number
         count += 1
 
-    match count:
-        case 0:
-            return NONE()
-        case count_at_least_one:
-            return Some(total / count_at_least_one)
+    if count == 0:
+        return NONE()
+
+    return Some(total / count)
 
 
 T = TypeVar("T")
@@ -28,8 +27,5 @@ def filter_map(
     for value in iterable:
         maybe = function(value)
 
-        match maybe.to_matchable():
-            case MatchesNone():
-                pass
-            case MatchesSome(some):
-                yield some
+        if maybe.is_some():
+            yield maybe.unwrap()

@@ -122,9 +122,7 @@ async def record_camera_feed(
             all_frames = list(recording_folder.iterdir())
 
             # Assemble a video from the captured frames
-            await assemble_video(
-                all_frames, recording_folder / "video.mkv"
-            )
+            await assemble_video(all_frames, recording_folder / "video.mkv")
 
             # Reset the recording information
             frame_number = 0

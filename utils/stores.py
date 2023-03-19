@@ -4,7 +4,7 @@ from functools import partial
 from operator import lshift
 from typing import Any, AsyncGenerator, Callable, Optional
 
-from option_and_result import NONE, MatchesSome, Option
+from option_and_result import NONE, Option
 from store import Args, DerivedValue, Readable, Value, readable
 
 
@@ -32,9 +32,10 @@ def derived_with_time(
             result = derivation(*values)  # type: ignore
             set_(result)
 
-            match timer_handle.take().to_matchable():
-                case MatchesSome(handle):
-                    handle.cancel()
+            previous_timer_handle = timer_handle.take()
+            if previous_timer_handle.is_some():
+                handle = previous_timer_handle.unwrap()
+                handle.cancel()
 
             delay = get_max_period()
             timer_handle.insert(
@@ -67,9 +68,10 @@ def derived_with_time(
         )
 
         def stop():
-            match timer_handle.take().to_matchable():
-                case MatchesSome(handle):
-                    handle.cancel()
+            previous_timer_handle = timer_handle.take()
+            if previous_timer_handle.is_some():
+                handle = previous_timer_handle.unwrap()
+                handle.cancel()
 
             for unsubscribe in unsubscribers:
                 unsubscribe()

@@ -23,7 +23,7 @@ from bisect import bisect
 from datetime import datetime, timedelta
 
 import bounded_channel
-from option_and_result import NONE, MatchesSome, Option, Some
+from option_and_result import NONE, Option, Some
 from store import Writable, writable
 
 from microcontroller_application.interfaces.message_types import (
@@ -114,11 +114,12 @@ async def run(
     async def send_synthesized_brightness():
         async for synthesized_brightness_option in values(synthesized_brightness_store):
 
-            match synthesized_brightness_option.to_matchable():
-                case MatchesSome(synthesized_brightness):
-                    await to_duty_cycle.send(
-                        FromSynthesisToDutyCycle(synthesized_brightness)
-                    )
+            if synthesized_brightness_option.is_some():
+                synthesized_brightness = synthesized_brightness_option.unwrap()
+
+                await to_duty_cycle.send(
+                    FromSynthesisToDutyCycle(synthesized_brightness)
+                )
 
     await gather(
         put_ambient_brightness_in_store(),
@@ -137,33 +138,30 @@ def synthesize_if_initialized(
     identified_people_option: Option[list[IdentifiedPerson]],
     preferences_option: Option[dict[UserSlot, Preferences]],
 ) -> Option[float]:
-    match (
-        ambient_brightness_option.to_matchable(),
-        activities_option.to_matchable(),
-        identified_people_option.to_matchable(),
-        preferences_option.to_matchable(),
+    if (
+        ambient_brightness_option.is_some()
+        and activities_option.is_some()
+        and identified_people_option.is_some()
+        and preferences_option.is_some()
     ):
-        case (
-            MatchesSome(ambient_brightness),
-            MatchesSome(activities),
-            MatchesSome(identified_people),
-            MatchesSome(preferences),
-        ):
+        ambient_brightness = ambient_brightness_option.unwrap()
+        activities = activities_option.unwrap()
+        identified_people = identified_people_option.unwrap()
+        preferences = preferences_option.unwrap()
 
-            now = datetime.now()
+        now = datetime.now()
 
-            return Some(
-                calculate_synthesized_light_brightness(
-                    activities=activities,
-                    ambient_light_lumens=ambient_brightness,
-                    now=now,
-                    people_in_room=identified_people,
-                    user_preferences=preferences,
-                )
+        return Some(
+            calculate_synthesized_light_brightness(
+                activities=activities,
+                ambient_light_lumens=ambient_brightness,
+                now=now,
+                people_in_room=identified_people,
+                user_preferences=preferences,
             )
+        )
 
-        case _:
-            return NONE()
+    return NONE()
 
 
 def calculate_brightness_for_user(
@@ -180,20 +178,21 @@ def calculate_brightness_for_user(
 
     corresponding_timer = preferences.timers[corresponding_timer_index]
 
-    match corresponding_timer.effect:
-        case LightEffectForceEndBrightness(exact_lumens):
-            return exact_lumens
+    if isinstance(corresponding_timer.effect, LightEffectForceEndBrightness):
+        exact_lumens = corresponding_timer.effect.lumens
+        return exact_lumens
+    elif isinstance(corresponding_timer.effect, LightEffectDesiredBrightness):
+        desired_lumens = corresponding_timer.effect.lumens
 
-        case LightEffectDesiredBrightness(desired_lumens):
-            if activity == Activity.WORKING:
-                # Ensure there’s at least 300 lumens of light
-                # being emitted to work with
-                desired_lumens += 300
-            elif activity == Activity.LYING:
-                # Make it up to 300 lumens (about 50%) darker
-                # to make it easier to relax and sleep
-                desired_lumens -= 300
-                # Better values may be found from experimentation
+        if activity == Activity.WORKING:
+            # Ensure there’s at least 300 lumens of light
+            # being emitted to work with
+            desired_lumens += 300
+        elif activity == Activity.LYING:
+            # Make it up to 300 lumens (about 50%) darker
+            # to make it easier to relax and sleep
+            desired_lumens -= 300
+            # Better values may be found from experimentation
 
             difference_between_desired_and_ambient = (
                 desired_lumens - ambient_light_lumens
@@ -211,6 +210,8 @@ def calculate_brightness_for_user(
             # This represents a non-full and non-off amount of light
             # (between 0% to 100% duty cycle)
             return difference_between_desired_and_ambient
+    else:
+        raise RuntimeError("unreachable")
 
 
 def calculate_synthesized_light_brightness(
@@ -222,44 +223,41 @@ def calculate_synthesized_light_brightness(
     user_preferences: dict[UserSlot, Preferences],
 ) -> float:
 
-    match people_in_room:
-        case []:
-            # If no one’s there, it should be off
-            return 0.0
+    # If no one’s there, it should be off
+    if len(people_in_room) == 0:
+        return 0.0
 
-        case people:
-            trusted_people = [
-                (index, person.unwrap())
-                for (index, person) in enumerate(people)
-                if person.is_some()
-            ]
+    trusted_people = [
+        (index, person.unwrap())
+        for (index, person) in enumerate(people_in_room)
+        if person.is_some()
+    ]
 
-            match trusted_people:
-                # There is at least one untrusted person in the room
-                # and no trusted people in the room
-                case []:
-                    # What brightness lights should be in this scenario is unspecified,
-                    # but (approximately) half of max brightness (600) is a good start.
-                    # Maybe we'll change this.
-                    return 300.0
-                case multiple_trusted_people:
-                    brightnesses = []
+    # There is at least one untrusted person in the room
+    # and no trusted people in the room
+    if len(trusted_people) == 0:
+        # What brightness lights should be in this scenario is unspecified,
+        # but (approximately) half of max brightness (600) is a good start.
+        # Maybe we'll change this.
+        return 300.0
 
-                    for (index, person) in multiple_trusted_people:
-                        preferences = user_preferences[person]
+    brightnesses = []
 
-                        activity = activities[index]
+    for (index, person) in trusted_people:
+        preferences = user_preferences[person]
 
-                        brightness = calculate_brightness_for_user(
-                            activity=activity,
-                            ambient_light_lumens=ambient_light_lumens,
-                            now=now,
-                            preferences=preferences,
-                        )
+        activity = activities[index]
 
-                        brightnesses.append(brightness)
+        brightness = calculate_brightness_for_user(
+            activity=activity,
+            ambient_light_lumens=ambient_light_lumens,
+            now=now,
+            preferences=preferences,
+        )
 
-                    # Cannot be a None variant because this list has at least one element
-                    average_brightness = average(brightnesses).unwrap()
+        brightnesses.append(brightness)
 
-                    return average_brightness
+    # Cannot be a None variant because this list has at least one element
+    average_brightness = average(brightnesses).unwrap()
+
+    return average_brightness

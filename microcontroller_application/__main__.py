@@ -64,9 +64,17 @@ async def main():
         i16_camera_feed_interest_sender,
         i16_camera_feed_interest_receiver,
     ) = bounded_channel.channel(32)
-    i16_request_history_sender, i16_request_history_receiver = bounded_channel.channel(32)
-    i16_request_duty_cycle_sender, i16_request_duty_cycle_receiver = bounded_channel.channel(32)
-    i16_record_the_camera_sender, i16_record_the_camera_receiver = bounded_channel.channel(32)
+    i16_request_history_sender, i16_request_history_receiver = bounded_channel.channel(
+        32
+    )
+    (
+        i16_request_duty_cycle_sender,
+        i16_request_duty_cycle_receiver,
+    ) = bounded_channel.channel(32)
+    (
+        i16_record_the_camera_sender,
+        i16_record_the_camera_receiver,
+    ) = bounded_channel.channel(32)
 
     # End of creating interfaces
 
