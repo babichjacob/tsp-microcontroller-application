@@ -113,14 +113,14 @@ files = [
 
 [[package]]
 name = "babichjacob-store"
-version = "0.3.0"
+version = "0.4.1"
 description = "A Python implementation of svelte/store"
 category = "main"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "babichjacob_store-0.3.0-py3-none-any.whl", hash = "sha256:1a04d128d21fdb0090b765e263243260d6fca57b53fcb048da5820271a7de757"},
-    {file = "babichjacob_store-0.3.0.tar.gz", hash = "sha256:c4240e1780240275c25f6186e331dce1c679d8fee7c31b49a48a213e7fcbf7ce"},
+    {file = "babichjacob_store-0.4.1-py3-none-any.whl", hash = "sha256:9192c698ea1d4ec07d32db9d55ae7192631f0269dd523bfe39e41c7c632c50ba"},
+    {file = "babichjacob_store-0.4.1.tar.gz", hash = "sha256:2fe96e310eb0f2216604ed759f95f23c3726e8b8601848fed76bdd0742d09088"},
 ]
 
 [[package]]
@@ -1701,4 +1701,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "4337701c3c492a0d644f7b8977defb8e0f5131522d6577c9c02eb1eb55212e8e"
+content-hash = "a1c21c44688eb1c52bdef5ae9c2af024aff0caa2681092d3bf393e36508e92b7"
