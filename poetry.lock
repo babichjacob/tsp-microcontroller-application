@@ -71,18 +71,18 @@ tests-no-zope = ["cloudpickle", "cloudpickle", "hypothesis", "hypothesis", "mypy
 
 [[package]]
 name = "babichjacob-bounded-channel"
-version = "0.3.2"
+version = "0.3.3"
 description = "A Python implementation of tokio::sync::mpsc::channel"
 category = "main"
 optional = false
 python-versions = ">=3.5,<4.0"
 files = [
-    {file = "babichjacob_bounded_channel-0.3.2-py3-none-any.whl", hash = "sha256:2d614b5c582b9475d4a9b7006f675cd3fe6a4b2ef3854e648a0ff17361eaad62"},
-    {file = "babichjacob_bounded_channel-0.3.2.tar.gz", hash = "sha256:c85a508caf6d2752f0e097ca3084489185328c19d470a9856f995d5ce84f5f10"},
+    {file = "babichjacob_bounded_channel-0.3.3-py3-none-any.whl", hash = "sha256:ad456613c425c7aac8811da11255ff57cae310a3b1cfcc638663aa8a7e458923"},
+    {file = "babichjacob_bounded_channel-0.3.3.tar.gz", hash = "sha256:44a2e335fa89b6f34120de7db4cc372a67a4a84945c8a0617d1610335ad692cd"},
 ]
 
 [package.dependencies]
-babichjacob-option-and-result = ">=0.2.0,<0.3.0"
+babichjacob-option-and-result = ">=0.2.3,<0.3.0"
 
 [[package]]
 name = "babichjacob-oneshot-channel"
@@ -1701,4 +1701,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<4.0"
-content-hash = "76a8d25a8433133075e5651da37a3a839d27adae25c8f6d6463cd4571be08249"
+content-hash = "4337701c3c492a0d644f7b8977defb8e0f5131522d6577c9c02eb1eb55212e8e"
