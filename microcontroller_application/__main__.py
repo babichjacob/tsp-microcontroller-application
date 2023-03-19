@@ -2,7 +2,7 @@
 
 from asyncio import gather
 
-from bounded_channel import bounded_channel
+import bounded_channel
 
 from .modules import (
     m01_environment,
@@ -25,48 +25,48 @@ async def main():
     # Start of creating interfaces
 
     # From the preferences module to the proxy module
-    i01_1_sender, i01_1_receiver = bounded_channel(32)
+    i01_1_sender, i01_1_receiver = bounded_channel.channel(32)
     # From the proxy module to the preferences module
-    i01_2_sender, i01_2_receiver = bounded_channel(32)
+    i01_2_sender, i01_2_receiver = bounded_channel.channel(32)
     # From the aggregation module to the proxy module
-    i02_duty_cycle_sender, i02_duty_cycle_receiver = bounded_channel(32)
-    i02_camera_frame_sender, i02_camera_frame_receiver = bounded_channel(32)
-    i02_history_sender, i02_history_receiver = bounded_channel(32)
+    i02_duty_cycle_sender, i02_duty_cycle_receiver = bounded_channel.channel(32)
+    i02_camera_frame_sender, i02_camera_frame_receiver = bounded_channel.channel(32)
+    i02_history_sender, i02_history_receiver = bounded_channel.channel(32)
     # From the human detection module to the activity recognition module
-    i03_sender, i03_receiver = bounded_channel(32)
+    i03_sender, i03_receiver = bounded_channel.channel(32)
     # From the human detection module to the person identification module
-    i04_sender, i04_receiver = bounded_channel(32)
+    i04_sender, i04_receiver = bounded_channel.channel(32)
     # From the activity recognition module to the control module
-    i05_sender, i05_receiver = bounded_channel(32)
+    i05_sender, i05_receiver = bounded_channel.channel(32)
     # From the person identification module to the control module
-    i06_sender, i06_receiver = bounded_channel(32)
+    i06_sender, i06_receiver = bounded_channel.channel(32)
     # From the preferences module to the control module
-    i07_sender, i07_receiver = bounded_channel(32)
+    i07_sender, i07_receiver = bounded_channel.channel(32)
     # From the proxy module to the person identification module
-    i08_sender, i08_receiver = bounded_channel(32)
+    i08_sender, i08_receiver = bounded_channel.channel(32)
     # From the person identification module to the proxy module
-    i09_sender, i09_receiver = bounded_channel(32)
+    i09_sender, i09_receiver = bounded_channel.channel(32)
     # From the person identification module to the aggregation module
-    i10_sender, i10_receiver = bounded_channel(32)
+    i10_sender, i10_receiver = bounded_channel.channel(32)
     # From the control module to the aggregation module
-    i11_duty_cycle_sender, i11_duty_cycle_receiver = bounded_channel(32)
-    i11_power_sender, i11_power_receiver = bounded_channel(32)
+    i11_duty_cycle_sender, i11_duty_cycle_receiver = bounded_channel.channel(32)
+    i11_power_sender, i11_power_receiver = bounded_channel.channel(32)
     # From the environment module to the human detection module
-    i13_motion_sender, i13_motion_receiver = bounded_channel(32)
-    i13_occupancy_sender, i13_occupancy_receiver = bounded_channel(32)
-    i13_camera_frame_sender, i13_camera_frame_receiver = bounded_channel(32)
+    i13_motion_sender, i13_motion_receiver = bounded_channel.channel(32)
+    i13_occupancy_sender, i13_occupancy_receiver = bounded_channel.channel(32)
+    i13_camera_frame_sender, i13_camera_frame_receiver = bounded_channel.channel(32)
     # From the environment module to the control module
-    i14_sender, i14_receiver = bounded_channel(32)
+    i14_sender, i14_receiver = bounded_channel.channel(32)
     # From the environment module to the aggregation module
-    i15_sender, i15_receiver = bounded_channel(32)
+    i15_sender, i15_receiver = bounded_channel.channel(32)
     # From the proxy module to the aggregation module
     (
         i16_camera_feed_interest_sender,
         i16_camera_feed_interest_receiver,
-    ) = bounded_channel(32)
-    i16_request_history_sender, i16_request_history_receiver = bounded_channel(32)
-    i16_request_duty_cycle_sender, i16_request_duty_cycle_receiver = bounded_channel(32)
-    i16_record_the_camera_sender, i16_record_the_camera_receiver = bounded_channel(32)
+    ) = bounded_channel.channel(32)
+    i16_request_history_sender, i16_request_history_receiver = bounded_channel.channel(32)
+    i16_request_duty_cycle_sender, i16_request_duty_cycle_receiver = bounded_channel.channel(32)
+    i16_record_the_camera_sender, i16_record_the_camera_receiver = bounded_channel.channel(32)
 
     # End of creating interfaces
 

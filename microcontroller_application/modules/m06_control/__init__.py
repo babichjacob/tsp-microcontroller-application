@@ -47,8 +47,8 @@ async def run(
 
     LOGGER.debug("startup")
 
-    to_duty_cycle, from_synthesis = bounded_channel.bounded_channel(32)
-    to_power_derivation, from_duty_cycle = bounded_channel.bounded_channel(32)
+    to_duty_cycle, from_synthesis = bounded_channel.channel(32)
+    to_power_derivation, from_duty_cycle = bounded_channel.channel(32)
 
     sc02_synthesis_task = sc02_synthesis.run(
         from_environment=from_environment,

@@ -89,7 +89,7 @@ async def run(
     (
         converted_messages_sender,
         converted_messages_receiver,
-    ) = bounded_channel.bounded_channel(32)
+    ) = bounded_channel.channel(32)
 
     convert_from_aggregation_camera_frame_task = convert_from_aggregation_camera_frame(
         from_aggregation_camera_frame, converted_messages_sender

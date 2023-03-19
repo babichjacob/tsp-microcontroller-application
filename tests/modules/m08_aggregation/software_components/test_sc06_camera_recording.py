@@ -57,11 +57,11 @@ async def test_camera_recording_01():
     (
         from_environment_sender,
         from_environment_receiver,
-    ) = bounded_channel.bounded_channel(32)
+    ) = bounded_channel.channel(32)
     (
         from_proxy_record_the_camera_sender,
         from_proxy_record_the_camera_receiver,
-    ) = bounded_channel.bounded_channel(32)
+    ) = bounded_channel.channel(32)
 
     test_timestamp = datetime(year=2022, month=8, day=17, hour=6, minute=43, second=25)
 

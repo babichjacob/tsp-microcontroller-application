@@ -6,7 +6,7 @@ Module: 06. Control
 from asyncio import create_task
 
 import pytest
-from bounded_channel import bounded_channel
+import bounded_channel
 
 from microcontroller_application.interfaces.message_types import (
     FromActivityRecognitionToControl,
@@ -20,12 +20,12 @@ from microcontroller_application.modules import m06_control
 
 @pytest.mark.asyncio
 async def test_integration_1():
-    i05_sender, i05_receiver = bounded_channel(32)
-    i06_sender, i06_receiver = bounded_channel(32)
-    i07_sender, i07_receiver = bounded_channel(32)
-    i11_duty_cycle_sender, i11_duty_cycle_receiver = bounded_channel(32)
-    i11_power_sender, i11_power_receiver = bounded_channel(32)
-    i13_sender, i13_receiver = bounded_channel(32)
+    i05_sender, i05_receiver = bounded_channel.channel(32)
+    i06_sender, i06_receiver = bounded_channel.channel(32)
+    i07_sender, i07_receiver = bounded_channel.channel(32)
+    i11_duty_cycle_sender, i11_duty_cycle_receiver = bounded_channel.channel(32)
+    i11_power_sender, i11_power_receiver = bounded_channel.channel(32)
+    i13_sender, i13_receiver = bounded_channel.channel(32)
 
     m06_control_task = m06_control.run(
         from_activity_recognition=i05_receiver,
