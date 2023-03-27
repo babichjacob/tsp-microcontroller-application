@@ -239,6 +239,8 @@ async def run(
 ):
     "Run the AI human detection software component"
 
+    LOGGER.debug("startup")
+
     requested_human_detection = Event()
 
     occupied = Event()
@@ -269,6 +271,8 @@ async def run(
             requested_human_detection=requested_human_detection,
         ),
     )
+
+    LOGGER.debug("shutdown")
 
 
 async def check_motion_sensor(
