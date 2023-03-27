@@ -1,6 +1,9 @@
 """The microcontroller application all coming together"""
 
 from asyncio import gather
+from datetime import datetime
+from os import getenv
+from pathlib import Path
 
 import bounded_channel
 
@@ -11,6 +14,7 @@ from .modules import (
     m04_person_identification,
     m05_preferences,
     m06_control,
+    m07x_lighting_connector,
     m08_aggregation,
     m09x_proxy_connector,
 )
@@ -75,10 +79,19 @@ async def main():
         i16_record_the_camera_sender,
         i16_record_the_camera_receiver,
     ) = bounded_channel.channel(32)
+    # From the control module to the lighting module
+    ih2_sender, ih2_receiver = bounded_channel.channel(32)
 
     # End of creating interfaces
 
     # Start of creating module tasks
+
+    randomize_environment_module = getenv("RANDOMIZE_ENVIRONMENT_MODULE", "False")
+    if randomize_environment_module not in {"False", "True"}:
+        raise ValueError(
+            f"RANDOMIZE_ENVIRONMENT_MODULE is {randomize_environment_module!r} "
+            "but it needs to be False or True exactly"
+        )
 
     m01_environment_task = m01_environment.run(
         to_human_detection_motion=i13_motion_sender,
@@ -86,12 +99,13 @@ async def main():
         to_human_detection_camera_frame=i13_camera_frame_sender,
         to_control=i14_sender,
         to_aggregation=i15_sender,
+        use_randomized_data=randomize_environment_module == "True",
     )
 
     m02_human_detection_task = m02_human_detection.run(
         from_environment_motion=i13_motion_receiver,
-        from_environment_occupancy=i13_motion_receiver,
-        from_environment_camera_frame=i13_motion_receiver,
+        from_environment_occupancy=i13_occupancy_receiver,
+        from_environment_camera_frame=i13_camera_frame_receiver,
         to_activity_recognition=i03_sender,
         to_person_identification=i04_sender,
     )
@@ -101,12 +115,15 @@ async def main():
         to_control=i05_sender,
     )
 
+    trusted_users_folder = Path("trusted-users")
+
     m04_person_identification_task = m04_person_identification.run(
         from_human_detection=i04_receiver,
         from_proxy=i08_receiver,
         to_aggregation=i10_sender,
         to_proxy=i09_sender,
         to_control=i06_sender,
+        trusted_users_folder=trusted_users_folder,
     )
 
     m05_preferences_task = m05_preferences.run(
@@ -122,7 +139,25 @@ async def main():
         from_preferences=i07_receiver,
         to_aggregation_duty_cycle=i11_duty_cycle_sender,
         to_aggregation_power=i11_power_sender,
+        to_lighting=ih2_sender,
     )
+
+    
+    enable_lighting_hardware = getenv("ENABLE_LIGHTING_HARDWARE", "True")
+    if enable_lighting_hardware not in {"False", "True"}:
+        raise ValueError(
+            f"ENABLE_LIGHTING_HARDWARE is {enable_lighting_hardware!r} "
+            "but it needs to be False or True exactly"
+        )
+
+    m07x_lighting_connector_task = m07x_lighting_connector.run(
+        from_control=ih2_receiver,
+        use_real_hardware=enable_lighting_hardware == "True",
+    )
+
+    history_folder = Path("app-history")
+
+    get_current_time = datetime.now
 
     m08_aggregation_task = m08_aggregation.run(
         from_person_identification=i10_receiver,
@@ -135,6 +170,8 @@ async def main():
         to_proxy_camera_frame=i02_camera_frame_sender,
         to_proxy_duty_cycle=i02_duty_cycle_sender,
         to_proxy_history=i02_history_sender,
+        history_folder=history_folder,
+        get_current_time=get_current_time,
     )
 
     m09x_proxy_connector_task = m09x_proxy_connector.run(
@@ -182,6 +219,7 @@ async def main():
     del i16_request_duty_cycle_sender, i16_request_duty_cycle_receiver
     del i16_request_history_sender, i16_request_history_receiver
     del i16_record_the_camera_sender, i16_record_the_camera_receiver
+    del ih2_sender, ih2_receiver
 
     # End of dropping extra references
 

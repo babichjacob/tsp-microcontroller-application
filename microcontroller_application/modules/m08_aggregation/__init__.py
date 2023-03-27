@@ -5,6 +5,9 @@ current and historical data.
 
 
 from asyncio import gather
+from datetime import datetime
+from pathlib import Path
+from typing import Callable
 
 import bounded_channel
 
@@ -58,6 +61,8 @@ async def run(
     to_proxy_camera_frame: bounded_channel.Sender[FromAggregationToProxyCameraFrame],
     to_proxy_duty_cycle: bounded_channel.Sender[FromAggregationToProxyDutyCycle],
     to_proxy_history: bounded_channel.Sender[FromAggregationToProxyHistory],
+    history_folder: Path,
+    get_current_time: Callable[[], datetime],
 ):
     "Run the aggregation module"
 
@@ -71,19 +76,6 @@ async def run(
         to_proxy_camera_frame=to_proxy_camera_frame,
         to_proxy_duty_cycle=to_proxy_duty_cycle,
     )
-
-    # TODO: need to figure out what to do about these
-
-    # probably make them parameters of the module
-    # and supplied in __main__.py
-    from datetime import datetime
-
-    get_current_time = datetime.now
-    from pathlib import Path
-
-    history_folder = Path("app-history")  # TODO: not actually the intended path
-
-    # END TODO
 
     sc04_history_compaction_task = sc04_history_compaction.run(
         from_control_duty_cycle=from_control_duty_cycle,
