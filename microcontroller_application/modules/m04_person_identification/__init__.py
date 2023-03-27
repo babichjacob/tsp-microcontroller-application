@@ -6,6 +6,7 @@ user(s), if any, the human(s) in the room are.
 """
 
 from asyncio import gather
+from pathlib import Path
 import bounded_channel
 
 from microcontroller_application.interfaces.message_types import (
@@ -36,13 +37,16 @@ async def run(
     to_aggregation: bounded_channel.Sender[FromPersonIdentificationToAggregation],
     to_proxy: bounded_channel.Sender[FromPersonIdentificationToProxy],
     to_control: bounded_channel.Sender[FromPersonIdentificationToControl],
+    trusted_users_folder: Path,
 ):
     "Run the person identification module"
 
     LOGGER.debug("startup")
 
     sc03_face_recognition_task = sc03_face_recognition.run(
-        from_human_detection=from_human_detection, to_control=to_control
+        from_human_detection=from_human_detection,
+        to_control=to_control,
+        trusted_users_folder=trusted_users_folder,
     )
 
     await gather(
