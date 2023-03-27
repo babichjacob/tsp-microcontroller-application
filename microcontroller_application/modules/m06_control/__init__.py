@@ -14,6 +14,7 @@ from microcontroller_application.interfaces.message_types import (
     FromActivityRecognitionToControl,
     FromControlToAggregationDutyCycle,
     FromControlToAggregationPower,
+    FromControlToLighting,
     FromEnvironmentToControl,
     FromPersonIdentificationToControl,
     FromPreferencesToControl,
@@ -42,6 +43,7 @@ async def run(
         FromControlToAggregationDutyCycle
     ],
     to_aggregation_power: bounded_channel.Sender[FromControlToAggregationPower],
+    to_lighting: bounded_channel.Sender[FromControlToLighting]
 ):
     "Run the control module"
 
@@ -65,6 +67,7 @@ async def run(
         from_synthesis=from_synthesis,
         to_power_derivation=to_power_derivation,
         to_aggregation_duty_cycle=to_aggregation_duty_cycle,
+        to_lighting=to_lighting,
     )
 
     await gather(

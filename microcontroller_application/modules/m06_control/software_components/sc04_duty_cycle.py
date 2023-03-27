@@ -12,6 +12,7 @@ This component converts this value from lumens to a percentage
 import bounded_channel
 from microcontroller_application.interfaces.message_types import (
     FromControlToAggregationDutyCycle,
+    FromControlToLighting,
 )
 
 from microcontroller_application.log import get_logger
@@ -30,6 +31,7 @@ async def run(
     to_aggregation_duty_cycle: bounded_channel.Sender[
         FromControlToAggregationDutyCycle
     ],
+    to_lighting: bounded_channel.Sender[FromControlToLighting]
 ):
     "Run the duty cycle software component"
 
@@ -41,9 +43,12 @@ async def run(
 
         await at_least_one(
             [
-                to_power_derivation.send(FromDutyCycleToPowerDerivation(duty_cycle)),
+                to_lighting.send(FromControlToLighting(duty_cycle=duty_cycle)),
+                to_power_derivation.send(
+                    FromDutyCycleToPowerDerivation(duty_cycle=duty_cycle)
+                ),
                 to_aggregation_duty_cycle.send(
-                    FromControlToAggregationDutyCycle(duty_cycle)
+                    FromControlToAggregationDutyCycle(duty_cycle=duty_cycle)
                 ),
             ]
         )

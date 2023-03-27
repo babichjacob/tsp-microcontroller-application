@@ -288,3 +288,10 @@ class FromProxyToAggregationRecordTheCamera:
     "Whether or not the camera should record to the filesystem"
 
     should_record: bool
+
+# Hardware interface 2
+@dataclass
+class FromControlToLighting:
+    "What duty cycle of PWM to set the dimmer to"
+
+    duty_cycle: float
