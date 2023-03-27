@@ -10,7 +10,7 @@ whenever it (the state of motion) changes.
 from asyncio import sleep
 
 import bounded_channel
-from option_and_result import NONE, Some
+from option_and_result import NONE, Option, Some
 
 from microcontroller_application.interfaces.message_types import (
     FromEnvironmentToHumanDetectionMotion,
@@ -23,26 +23,55 @@ LOGGER = get_logger(__name__)
 async def run(
     *,
     to_human_detection: bounded_channel.Sender[FromEnvironmentToHumanDetectionMotion],
+    use_randomized_data: bool,
 ):
     LOGGER.debug("startup")
 
-    # TODO
-    LOGGER.error("this hasn't been programmed yet, so it doesn't do anything")
+    if use_randomized_data:
+        from random import getrandbits
 
-    # TODO: GPIO.setup(motion_pin, GPIO.IN)
+        LOGGER.warning("using randomized data")
 
-    last_motion_detected = NONE()
-    while True:
-        # TODO: remove
-        break
+        last_motion_detected = NONE()
 
-        await sleep(0.1)
-        motion_detected = pseudocode  # GPIO.read_input(motion_pin)
-        motion_detected = Some(motion_detecteđ)
+        while True:
+            motion_detected = bool(getrandbits(1))
 
-        if motion_detected != last_motion_detected:
-            await to_human_detection.send(motion_detected)
+            LOGGER.info("(RANDOM) motion_detected: %s", motion_detected)
 
-        last_motion_detected = motion_detected
+            some_motion_detected = Some(motion_detected)
+
+            if motion_detected != last_motion_detected:
+                message = FromEnvironmentToHumanDetectionMotion(
+                    new_state=motion_detected
+                )
+                await to_human_detection.send(message)
+
+            last_motion_detected = some_motion_detected
+            await sleep(0.3)
+
+    else:
+        import RPi.GPIO as GPIO
+
+        motion_pin = 25
+        GPIO.setup(motion_pin, GPIO.IN)
+
+        last_motion_detected: Option[bool] = NONE()
+
+        while True:
+            motion_detected = GPIO.input(motion_pin) == 1
+
+            LOGGER.info("motion_detected: %s", motion_detected)
+
+            some_motion_detected = Some(motion_detected)
+
+            if motion_detected != last_motion_detected:
+                message = FromEnvironmentToHumanDetectionMotion(
+                    new_state=motion_detected
+                )
+                await to_human_detection.send(message)
+
+            last_motion_detected = some_motion_detected
+            await sleep(0.3)
 
     LOGGER.debug("shutdown")
