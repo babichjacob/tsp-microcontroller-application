@@ -1,0 +1,12 @@
+[Unit]
+Description=Team Second Place - Smart Home System - Microcontroller Application
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+ExecStart=python3 -m microcontroller_application
+WorkingDirectory=/home/robert/Development/microcontroller-application
+
+[Install]
+WantedBy=multi-user.target
