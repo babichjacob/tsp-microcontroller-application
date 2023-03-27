@@ -1,9 +1,10 @@
 """
+Module: 05. Preferences
 This module is concerned with keeping track
 of each trusted user’s lighting preferences.
 """
 
-from bounded_channel import Receiver, Sender
+import bounded_channel
 
 from microcontroller_application.interfaces.message_types import (
     FromPreferencesToControl,
@@ -17,9 +18,9 @@ LOGGER = get_logger(__name__)
 
 async def run(
     *,
-    from_proxy: Receiver[FromProxyToPreferences],
-    to_proxy: Sender[FromPreferencesToProxy],
-    to_control: Sender[FromPreferencesToControl],
+    from_proxy: bounded_channel.Receiver[FromProxyToPreferences],
+    to_proxy: bounded_channel.Sender[FromPreferencesToProxy],
+    to_control: bounded_channel.Sender[FromPreferencesToControl],
 ):
     "Run the preferences module"
 
