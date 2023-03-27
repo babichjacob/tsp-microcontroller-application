@@ -43,26 +43,37 @@ async def run(
     ],
     to_control: bounded_channel.Sender[FromEnvironmentToControl],
     to_aggregation: bounded_channel.Sender[FromEnvironmentToAggregation],
+    use_randomized_data: bool,
 ):
     "Run the environment module"
 
     LOGGER.debug("startup")
 
+    if not use_randomized_data:
+        import RPi.GPIO as GPIO
+
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+
     sc02_camera_driver_task = sc02_camera_driver.run(
         to_human_detection=to_human_detection_camera_frame,
         to_aggregation=to_aggregation,
+        use_randomized_data=use_randomized_data,
     )
 
     sc04_light_sensor_driver_task = sc04_light_sensor_driver.run(
         to_control=to_control,
+        use_randomized_data=use_randomized_data,
     )
 
     sc06_motion_sensor_driver_task = sc06_motion_sensor_driver.run(
         to_human_detection=to_human_detection_motion,
+        use_randomized_data=use_randomized_data,
     )
 
     sc08_occupancy_sensor_driver_task = sc08_occupancy_sensor_driver.run(
         to_human_detection=to_human_detection_occupancy,
+        use_randomized_data=use_randomized_data,
     )
 
     await gather(
@@ -71,5 +82,10 @@ async def run(
         sc06_motion_sensor_driver_task,
         sc08_occupancy_sensor_driver_task,
     )
+
+    if not use_randomized_data:
+        import RPi.GPIO as GPIO
+
+        GPIO.cleanup()
 
     LOGGER.debug("shutdown")

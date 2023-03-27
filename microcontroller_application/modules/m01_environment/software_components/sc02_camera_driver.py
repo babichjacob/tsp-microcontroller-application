@@ -25,6 +25,7 @@ async def run(
         FromEnvironmentToHumanDetectionCameraFrame
     ],
     to_aggregation: bounded_channel.Sender[FromEnvironmentToAggregation],
+    use_randomized_data: bool,
 ):
     LOGGER.debug("startup")
 
