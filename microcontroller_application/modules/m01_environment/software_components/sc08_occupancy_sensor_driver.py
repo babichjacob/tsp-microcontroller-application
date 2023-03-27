@@ -25,26 +25,59 @@ async def run(
     to_human_detection: bounded_channel.Sender[
         FromEnvironmentToHumanDetectionOccupancy
     ],
+    use_randomized_data: bool,
 ):
     LOGGER.debug("startup")
 
-    # TODO
-    LOGGER.error("this hasn't been programmed yet, so it doesn't do anything")
+    if use_randomized_data:
+        from random import getrandbits
 
-    # TODO: GPIO.setup(occupancy_pin, GPIO.IN)
+        LOGGER.warning("using randomized data")
 
-    last_occupancy_detected = NONE()
-    while True:
-        # TODO: remove
-        break
+        last_occupancy_detected = NONE()
+        while True:
+            occupancy_detected = bool(getrandbits(1))
 
-        await sleep(5)
-        occupancy_detected = pseudocode  # GPIO.read_input(occupancy_pin)
-        occupancy_detected = Some(occupancy_detected)
+            LOGGER.info("(RANDOM) occupancy_detected: %s", occupancy_detected)
 
-        if occupancy_detected != last_occupancy_detected:
-            await to_human_detection.send(occupancy_detected)
+            some_occupancy_detected = Some(occupancy_detected)
 
-        last_occupancy_detected = occupancy_detected
+            if some_occupancy_detected != last_occupancy_detected:
+                message = FromEnvironmentToHumanDetectionOccupancy(
+                    new_state=occupancy_detected
+                )
+                await to_human_detection.send(message)
+
+            last_occupancy_detected = some_occupancy_detected
+
+            await sleep(5)
+
+    else:
+        import serial
+
+        # Initialize UART
+        ser = serial.Serial("/dev/ttyS0", baudrate=115200)
+        ser.flushInput()  # Clear UART Input buffer
+        ser.flushOutput()  # Clear UART Output buffer
+
+        last_occupancy_detected = NONE()
+        while True:
+            raw_response = ser.readline()
+            response = raw_response.decode().strip()
+            occupancy_detected = bool(response.find("1"))
+
+            LOGGER.info("occupancy_detected: %s", occupancy_detected)
+
+            some_occupancy_detected = Some(occupancy_detected)
+
+            if some_occupancy_detected != last_occupancy_detected:
+                message = FromEnvironmentToHumanDetectionOccupancy(
+                    new_state=occupancy_detected
+                )
+                await to_human_detection.send(message)
+
+            last_occupancy_detected = some_occupancy_detected
+
+            await sleep(5)
 
     LOGGER.debug("shutdown")
