@@ -36,14 +36,12 @@ async def run(
         FromPersonIdentificationToControl
     ],
     from_preferences: bounded_channel.Receiver[FromPreferencesToControl],
-    # TODO: add a dimmer driver software component to the lighting module and
-    # This is actually a hardware interface so it should be removed
-    # to_lighting: Sender[FromControlToLighting],
     to_aggregation_duty_cycle: bounded_channel.Sender[
         FromControlToAggregationDutyCycle
     ],
     to_aggregation_power: bounded_channel.Sender[FromControlToAggregationPower],
-    to_lighting: bounded_channel.Sender[FromControlToLighting]
+    to_lighting: bounded_channel.Sender[FromControlToLighting],
+    use_randomized_data: bool,
 ):
     "Run the control module"
 
@@ -58,6 +56,7 @@ async def run(
         from_person_identification=from_person_identification,
         from_preferences=from_preferences,
         to_duty_cycle=to_duty_cycle,
+        use_randomized_data=use_randomized_data,
     )
     sc03_power_derivation_task = sc03_power_derivation.run(
         from_duty_cycle=from_duty_cycle,

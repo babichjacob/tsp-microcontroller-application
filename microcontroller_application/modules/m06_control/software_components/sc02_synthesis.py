@@ -18,7 +18,7 @@ That resulting brightness value is given to the aggregation module
 """
 
 
-from asyncio import gather, get_event_loop
+from asyncio import gather, get_event_loop, sleep
 from bisect import bisect
 from datetime import datetime, timedelta
 
@@ -59,75 +59,93 @@ async def run(
     ],
     from_preferences: bounded_channel.Receiver[FromPreferencesToControl],
     to_duty_cycle: bounded_channel.Sender[FromSynthesisToDutyCycle],
+    use_randomized_data: bool,
 ):
     LOGGER.debug("startup")
 
-    # TODO: extract these to top level functions with parameters
+    if use_randomized_data:
+        import numpy as np
 
-    ambient_brightness_store: Writable[Option[float], None] = writable(NONE())
+        LOGGER.warning("using randomized data")
 
-    async def put_ambient_brightness_in_store():
-        async for message in from_environment:
-            ambient_brightness = message.ambient_brightness
-            ambient_brightness_store.set(Some(ambient_brightness))
+        while True:
+            randomized_lumens = np.clip(np.random.uniform(low=-50, high=650), 0, 600)
 
-    activities_store: Writable[Option[list[Activity]], None] = writable(NONE())
+            message = FromSynthesisToDutyCycle(lumens=randomized_lumens)
 
-    async def put_activities_in_store():
-        async for message in from_activity_recognition:
-            activities = message.activities_of_humans
-            activities_store.set(Some(activities))
+            await to_duty_cycle.send(message)
 
-    identified_people_store: Writable[Option[list[IdentifiedPerson]], None] = writable(
-        NONE()
-    )
+            await sleep(3)
 
-    async def put_trusted_people_in_store():
-        async for message in from_person_identification:
-            identified_people = message.identified_people
-            identified_people_store.set(Some(identified_people))
+    else:
+        # TODO: extract these to top level functions with parameters
 
-    preferences_store: Writable[Option[dict[UserSlot, Preferences]], None] = writable(
-        NONE()
-    )
+        ambient_brightness_store: Writable[Option[float], None] = writable(NONE())
 
-    async def put_preferences_in_store():
-        async for message in from_preferences:
-            preferences = message.preferences
-            preferences_store.set(Some(preferences))
+        async def put_ambient_brightness_in_store():
+            async for message in from_environment:
+                ambient_brightness = message.ambient_brightness
+                ambient_brightness_store.set(Some(ambient_brightness))
 
-    loop = get_event_loop()
+        activities_store: Writable[Option[list[Activity]], None] = writable(NONE())
 
-    synthesized_brightness_store = derived_with_time(
-        [
-            ambient_brightness_store,
-            activities_store,
-            identified_people_store,
-            preferences_store,
-        ],
-        synthesize_if_initialized,
-        loop=loop,
-        # Recalculate at least every 15 seconds
-        get_max_period=lambda: timedelta(seconds=15),
-    )
+        async def put_activities_in_store():
+            async for message in from_activity_recognition:
+                activities = message.activities_of_humans
+                activities_store.set(Some(activities))
 
-    async def send_synthesized_brightness():
-        async for synthesized_brightness_option in values(synthesized_brightness_store):
+        identified_people_store: Writable[
+            Option[list[IdentifiedPerson]], None
+        ] = writable(NONE())
 
-            if synthesized_brightness_option.is_some():
-                synthesized_brightness = synthesized_brightness_option.unwrap()
+        async def put_trusted_people_in_store():
+            async for message in from_person_identification:
+                identified_people = message.identified_people
+                identified_people_store.set(Some(identified_people))
 
-                await to_duty_cycle.send(
-                    FromSynthesisToDutyCycle(synthesized_brightness)
-                )
+        preferences_store: Writable[
+            Option[dict[UserSlot, Preferences]], None
+        ] = writable(NONE())
 
-    await gather(
-        put_ambient_brightness_in_store(),
-        put_activities_in_store(),
-        put_trusted_people_in_store(),
-        put_preferences_in_store(),
-        send_synthesized_brightness(),
-    )
+        async def put_preferences_in_store():
+            async for message in from_preferences:
+                preferences = message.preferences
+                preferences_store.set(Some(preferences))
+
+        loop = get_event_loop()
+
+        synthesized_brightness_store = derived_with_time(
+            [
+                ambient_brightness_store,
+                activities_store,
+                identified_people_store,
+                preferences_store,
+            ],
+            synthesize_if_initialized,
+            loop=loop,
+            # Recalculate at least every 15 seconds
+            get_max_period=lambda: timedelta(seconds=15),
+        )
+
+        async def send_synthesized_brightness():
+            async for synthesized_brightness_option in values(
+                synthesized_brightness_store
+            ):
+
+                if synthesized_brightness_option.is_some():
+                    synthesized_brightness = synthesized_brightness_option.unwrap()
+
+                    await to_duty_cycle.send(
+                        FromSynthesisToDutyCycle(synthesized_brightness)
+                    )
+
+        await gather(
+            put_ambient_brightness_in_store(),
+            put_activities_in_store(),
+            put_trusted_people_in_store(),
+            put_preferences_in_store(),
+            send_synthesized_brightness(),
+        )
 
     LOGGER.debug("shutdown")
 

@@ -72,11 +72,11 @@ async def run_save_duty_cycle(
             year = now.year
             month = now.month
             day = now.day
-            # Deeply nested folders
-            # HISTORY_FOLDER is a constant along the lines of “/home/pi/system_history”
-            today_s_history_file_path = (
-                history_folder / str(year) / str(month) / str(day) / "brightness.csv"
-            )
+
+            today_s_history_folder = history_folder / str(year) / str(month) / str(day)
+            today_s_history_folder.mkdir(parents=True, exist_ok=True)
+
+            today_s_history_file_path = today_s_history_folder / "brightness.csv"
             # Open the file in append mode
             with open(today_s_history_file_path, "a", encoding="utf8") as history_file:
                 writer = csv.writer(history_file)

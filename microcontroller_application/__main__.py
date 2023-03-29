@@ -132,6 +132,13 @@ async def main():
         to_control=i07_sender,
     )
 
+    randomize_control_module = getenv("RANDOMIZE_CONTROL_MODULE", "False")
+    if randomize_control_module not in {"False", "True"}:
+        raise ValueError(
+            f"RANDOMIZE_CONTROL_MODULE is {randomize_control_module!r} "
+            "but it needs to be False or True exactly"
+        )
+
     m06_control_task = m06_control.run(
         from_activity_recognition=i05_receiver,
         from_person_identification=i06_receiver,
@@ -140,9 +147,9 @@ async def main():
         to_aggregation_duty_cycle=i11_duty_cycle_sender,
         to_aggregation_power=i11_power_sender,
         to_lighting=ih2_sender,
+        use_randomized_data=randomize_control_module,
     )
 
-    
     enable_lighting_hardware = getenv("ENABLE_LIGHTING_HARDWARE", "True")
     if enable_lighting_hardware not in {"False", "True"}:
         raise ValueError(
@@ -234,6 +241,7 @@ async def main():
         m04_person_identification_task,
         m05_preferences_task,
         m06_control_task,
+        m07x_lighting_connector_task,
         m08_aggregation_task,
         m09x_proxy_connector_task,
     )
