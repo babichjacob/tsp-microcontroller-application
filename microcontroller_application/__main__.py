@@ -147,7 +147,7 @@ async def main():
         to_aggregation_duty_cycle=i11_duty_cycle_sender,
         to_aggregation_power=i11_power_sender,
         to_lighting=ih2_sender,
-        use_randomized_data=randomize_control_module,
+        use_randomized_data=randomize_control_module == "True",
     )
 
     enable_lighting_hardware = getenv("ENABLE_LIGHTING_HARDWARE", "True")
