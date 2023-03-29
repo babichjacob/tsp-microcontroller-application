@@ -2,7 +2,6 @@
 
 
 from bisect import bisect
-from operator import itemgetter
 
 
 def lerp_from_table(table: list[tuple[float, float]], value: float) -> float:
@@ -15,11 +14,12 @@ def lerp_from_table(table: list[tuple[float, float]], value: float) -> float:
             f"{table} does not have enough entries for it to be interpolatable"
         )
 
+    keys = [x for (x, y) in table]
+
     # Binary search to find what this falls between
     upper_index = bisect(
-        table,
+        keys,
         value,
-        key=itemgetter(0),
     )
 
     if upper_index <= 0:

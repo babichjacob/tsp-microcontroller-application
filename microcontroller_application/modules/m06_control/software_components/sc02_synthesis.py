@@ -228,8 +228,8 @@ def calculate_brightness_for_user(
             # This represents a non-full and non-off amount of light
             # (between 0% to 100% duty cycle)
             return difference_between_desired_and_ambient
-    else:
-        raise RuntimeError("unreachable")
+
+    raise RuntimeError("unreachable")
 
 
 def calculate_synthesized_light_brightness(

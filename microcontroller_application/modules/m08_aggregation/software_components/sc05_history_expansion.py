@@ -49,7 +49,7 @@ async def run(
             history_folder / str(year) / str(month) / str(day) / "intruders"
         )
 
-        timeline: list[TimelineEvent] = []
+        timeline: list[tuple[int, int, int, TimelineEvent]] = []
 
         with open(
             brightness_history_file_path, "r", encoding="utf8"
@@ -59,16 +59,20 @@ async def run(
             for line in reader:
                 hour, minute, second, brightness = line
 
-                time = Time(hour=int(hour), minute=int(minute), second=int(second))
+                int_hour = int(hour)
+                int_minute = int(minute)
+                int_second = int(second)
+
+                time = Time(hour=int_hour, minute=int_minute, second=int_second)
 
                 # insort uses binary searching to assemble a sorted list incrementally
                 insort(
                     timeline,
-                    TimelineEventBrightness(time=time, bucket=brightness),
-                    key=lambda event: (
-                        event.time.hour,
-                        event.time.minute,
-                        event.time.second,
+                    (
+                        int_hour,
+                        int_minute,
+                        int_second,
+                        TimelineEventBrightness(time=time, bucket=brightness),
                     ),
                 )
 
@@ -85,15 +89,19 @@ async def run(
                 minute = 0
                 second = 0
 
-                time = Time(hour=int(hour), minute=int(minute), second=int(second))
+                int_hour = int(hour)
+                int_minute = int(minute)
+                int_second = int(second)
+
+                time = Time(hour=int_hour, minute=int_minute, second=int_second)
 
                 insort(
                     timeline,
-                    TimelineEventEnergy(time=time, energy=float(energy)),
-                    key=lambda event: (
-                        event.time.hour,
-                        event.time.minute,
-                        event.time.second,
+                    (
+                        int_hour,
+                        int_minute,
+                        int_second,
+                        TimelineEventEnergy(time=time, energy=float(energy)),
                     ),
                 )
 
@@ -102,22 +110,28 @@ async def run(
             # Retrieve the hour, minute, and second back from the filename
             hour, minute, second = intruder_alert.stem.split("-")
 
-            time = Time(hour=int(hour), minute=int(minute), second=int(second))
+            int_hour = int(hour)
+            int_minute = int(minute)
+            int_second = int(second)
+
+            time = Time(hour=int_hour, minute=int_minute, second=int_second)
 
             # TODO: probably open the intruder alert file and pass it along here
 
             insort(
                 timeline,
-                TimelineEventIntruder(time=time, intruder_alert=intruder_alert),
-                key=lambda event: (
-                    event.time.hour,
-                    event.time.minute,
-                    event.time.second,
+                (
+                    int_hour,
+                    int_minute,
+                    int_second,
+                    TimelineEventIntruder(time=time, intruder_alert=intruder_alert),
                 ),
             )
+        
+        timeline_just_events = [event for (hour, minute, second, event) in timeline]
 
         await to_proxy.send(
-            FromAggregationToProxyHistory(user_id=message.user_id, timeline=timeline)
+            FromAggregationToProxyHistory(user_id=message.user_id, timeline=timeline_just_events)
         )
 
     LOGGER.debug("shutdown")
