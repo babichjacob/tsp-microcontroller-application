@@ -15,6 +15,7 @@ sends them to the appropriate module
 
 from asyncio import gather
 from io import BytesIO
+from ssl import OP_NO_TLSv1, OP_NO_TLSv1_1, create_default_context
 
 import bounded_channel
 from msgpack import dumps, loads
@@ -143,7 +144,13 @@ async def manage_connection(
 ):
     LOGGER.debug("start of managing connection")
 
-    connection = Connect(proxy_endpoint)
+    # Work around
+    # ssl.SSLError: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1123)
+    ssl_context = create_default_context()
+    ssl_context.options |= OP_NO_TLSv1
+    ssl_context.options |= OP_NO_TLSv1_1
+
+    connection = Connect(proxy_endpoint, ssl=ssl_context)
 
     async with connection as client_protocol:
         LOGGER.debug("%r as %r", connection, client_protocol)
