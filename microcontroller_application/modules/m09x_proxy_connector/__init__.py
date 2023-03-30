@@ -17,7 +17,10 @@ from asyncio import gather
 from io import BytesIO
 
 import bounded_channel
+from msgpack import dumps, loads
 from PIL.Image import Image
+from websockets.client import WebSocketClientProtocol
+from websockets.legacy.client import Connect
 
 from microcontroller_application.interfaces.message_types import (
     FromAggregationToProxyCameraFrame,
@@ -75,40 +78,147 @@ async def run(
     # TODO
     LOGGER.error("this hasn't been programmed yet")
 
-    # TODO: create a task for each from_ channel
-    # that converts the messages in the channel into a dict (JSON/msgpack-compatible)
-    # then pushes them to a centralized channel
-
-    # TODO: create a task that reads from the centralized channel
-    # and serializes to msgpack (bytes)
-    # and sends to the websocket
-
-    # TODO: create a task that reads from the websocket
-    # and deserializes the message to msgpack (dict)
-
     (
-        converted_messages_sender,
-        converted_messages_receiver,
+        converted_microcontroller_messages_sender,
+        converted_microcontroller_messages_receiver,
     ) = bounded_channel.channel(32)
 
     convert_from_aggregation_camera_frame_task = convert_from_aggregation_camera_frame(
-        from_aggregation_camera_frame, converted_messages_sender
+        from_aggregation_camera_frame, converted_microcontroller_messages_sender
     )
     convert_from_aggregation_duty_cycle_task = convert_from_aggregation_duty_cycle(
         from_aggregation_duty_cycle,
-        converted_messages_sender,
+        converted_microcontroller_messages_sender,
     )
 
     convert_from_person_identification_task = convert_from_person_identification(
         from_person_identification,
-        converted_messages_sender,
+        converted_microcontroller_messages_sender,
+    )
+
+    convert_from_preferences_task = convert_from_preferences(
+        from_preferences,
+        converted_microcontroller_messages_sender,
+    )
+
+    (
+        converted_proxy_messages_sender,
+        converted_proxy_messages_receiver,
+    ) = bounded_channel.channel(32)
+
+    convert_from_proxy_task = convert_from_proxy(
+        converted_proxy_messages_receiver=converted_proxy_messages_receiver,
+        to_aggregation_camera_feed_interest=to_aggregation_camera_feed_interest,
+        to_aggregation_record_the_camera=to_aggregation_record_the_camera,
+        to_aggregation_request_duty_cycle=to_aggregation_request_duty_cycle,
+        to_person_identification=to_person_identification,
+        to_preferences=to_preferences,
+    )
+
+    manage_connection_task = manage_connection(
+        proxy_endpoint=proxy_endpoint,
+        microcontroller_id=microcontroller_id,
+        from_microcontroller=converted_microcontroller_messages_receiver,
+        to_microcontroller=converted_proxy_messages_sender,
     )
 
     await gather(
         convert_from_aggregation_camera_frame_task,
         convert_from_aggregation_duty_cycle_task,
         convert_from_person_identification_task,
+        convert_from_preferences_task,
+        convert_from_proxy_task,
+        manage_connection_task,
     )
+
+    LOGGER.debug("shutdown")
+
+
+async def manage_connection(
+    *,
+    proxy_endpoint: str,
+    microcontroller_id: str,
+    from_microcontroller: bounded_channel.Receiver[FromMicrocontrollerToProxy],
+    to_microcontroller: bounded_channel.Sender[FromProxyToMicrocontroller],
+):
+    LOGGER.debug("start of managing connection")
+
+    connection = Connect(proxy_endpoint)
+
+    async with connection as client_protocol:
+        LOGGER.debug("%r as %r", connection, client_protocol)
+
+        registration_message = {
+            "Register": {
+                "microcontroller_id": microcontroller_id,
+            }
+        }
+
+        encoded_registration_message = dumps(registration_message)
+        if encoded_registration_message is None:
+            raise RuntimeError(f"{registration_message} encoded as None somehow?!")
+
+        LOGGER.info("registering as %s", microcontroller_id)
+        await client_protocol.send(encoded_registration_message)
+
+        encoded_message_back = await client_protocol.recv()
+        message_back = loads(encoded_message_back)
+
+        if message_back != "UsersAreOffline":
+            raise RuntimeError(
+                f"could not register with the proxy; got {message_back} instead"
+            )
+
+        LOGGER.info("registered as %s", microcontroller_id)
+
+        await gather(
+            producer(
+                client_protocol=client_protocol,
+                from_microcontroller=from_microcontroller,
+            ),
+            consumer(
+                client_protocol=client_protocol,
+                to_microcontroller=to_microcontroller,
+            ),
+        )
+
+    LOGGER.debug("end of managing connection")
+
+
+async def producer(
+    *,
+    client_protocol: WebSocketClientProtocol,
+    from_microcontroller: bounded_channel.Receiver[FromMicrocontrollerToProxy],
+):
+    LOGGER.debug("startup")
+
+    async for message in from_microcontroller:
+        LOGGER.debug("will send %r", message)
+        encoded_message = dumps(message)
+        LOGGER.debug("which encodes into %r", encoded_message)
+
+        if encoded_message is None:
+            raise RuntimeError(f"{message} encoded as None somehow?!")
+
+        await client_protocol.send(encoded_message)
+
+    LOGGER.debug("shutdown")
+
+
+async def consumer(
+    *,
+    client_protocol: WebSocketClientProtocol,
+    to_microcontroller: bounded_channel.Sender[FromProxyToMicrocontroller],
+):
+    LOGGER.debug("startup")
+    async for encoded_message in client_protocol:
+        LOGGER.debug("received %r from the connection", encoded_message)
+
+        message = loads(encoded_message)
+
+        LOGGER.debug("which decodes into %r", message)
+
+        (await to_microcontroller.send(message)).expect("no receiver")
 
     LOGGER.debug("shutdown")
 
@@ -125,9 +235,10 @@ async def convert_from_aggregation_camera_frame(
     from_aggregation_camera_frame: bounded_channel.Receiver[
         FromAggregationToProxyCameraFrame
     ],
-    converted_messages_sender: bounded_channel.Sender[FromMicrocontrollerToProxy],
+    converted_microcontroller_messages_sender: bounded_channel.Sender[
+        FromMicrocontrollerToProxy
+    ],
 ):
-
     async for message in from_aggregation_camera_frame:
         converted_message = {
             "UserSpecificData": [
@@ -138,14 +249,18 @@ async def convert_from_aggregation_camera_frame(
             ],
         }
 
-        (await converted_messages_sender.send(converted_message)).expect("no receiver")
+        (
+            await converted_microcontroller_messages_sender.send(converted_message)
+        ).expect("no receiver")
 
 
 async def convert_from_aggregation_duty_cycle(
     from_aggregation_duty_cycle: bounded_channel.Receiver[
         FromAggregationToProxyDutyCycle
     ],
-    converted_messages_sender: bounded_channel.Sender[FromMicrocontrollerToProxy],
+    converted_microcontroller_messages_sender: bounded_channel.Sender[
+        FromMicrocontrollerToProxy
+    ],
 ):
     async for message in from_aggregation_duty_cycle:
         converted_message = {
@@ -154,14 +269,18 @@ async def convert_from_aggregation_duty_cycle(
             },
         }
 
-        (await converted_messages_sender.send(converted_message)).expect("no receiver")
+        (
+            await converted_microcontroller_messages_sender.send(converted_message)
+        ).expect("no receiver")
 
 
 async def convert_from_person_identification(
     from_person_identification: bounded_channel.Receiver[
         FromPersonIdentificationToProxy
     ],
-    converted_messages_sender: bounded_channel.Sender[FromMicrocontrollerToProxy],
+    converted_microcontroller_messages_sender: bounded_channel.Sender[
+        FromMicrocontrollerToProxy
+    ],
 ):
     async for message in from_person_identification:
         converted_message = {
@@ -173,12 +292,16 @@ async def convert_from_person_identification(
             },
         }
 
-        (await converted_messages_sender.send(converted_message)).expect("no receiver")
+        (
+            await converted_microcontroller_messages_sender.send(converted_message)
+        ).expect("no receiver")
 
 
 async def convert_from_preferences(
     from_preferences: bounded_channel.Receiver[FromPreferencesToProxy],
-    converted_messages_sender: bounded_channel.Sender[FromMicrocontrollerToProxy],
+    converted_microcontroller_messages_sender: bounded_channel.Sender[
+        FromMicrocontrollerToProxy
+    ],
 ):
     async for message in from_preferences:
         converted_timers = [
@@ -203,4 +326,38 @@ async def convert_from_preferences(
             ],
         }
 
-        (await converted_messages_sender.send(converted_message)).expect("no receiver")
+        (
+            await converted_microcontroller_messages_sender.send(converted_message)
+        ).expect("no receiver")
+
+
+async def convert_from_proxy(
+    converted_proxy_messages_receiver: bounded_channel.Receiver[
+        FromProxyToMicrocontroller
+    ],
+    to_aggregation_camera_feed_interest: bounded_channel.Sender[
+        FromProxyToAggregationCameraFeedInterest
+    ],
+    to_aggregation_record_the_camera: bounded_channel.Sender[
+        FromProxyToAggregationRecordTheCamera
+    ],
+    to_aggregation_request_duty_cycle: bounded_channel.Sender[
+        FromProxyToAggregationRequestDutyCycle
+    ],
+    to_person_identification: bounded_channel.Sender[FromProxyToPersonIdentification],
+    to_preferences: bounded_channel.Sender[FromProxyToPreferences],
+):
+    async for message in converted_proxy_messages_receiver:
+        LOGGER.debug("got %r", message)
+
+        if message == "UsageError":
+            raise RuntimeError("usage error when communicating with the proxy")
+
+        if "Command" in message:
+            command = message["Command"]
+
+            LOGGER.error("TODO: switch / if / elif on the message contents")
+
+        # (
+        #     await to_aggregation_camera_feed_interest.send(converted_message_dataclass)
+        # ).expect("no receiver")
