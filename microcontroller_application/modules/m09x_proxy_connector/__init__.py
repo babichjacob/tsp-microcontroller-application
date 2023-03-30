@@ -147,8 +147,9 @@ async def manage_connection(
     # Work around
     # ssl.SSLError: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1123)
     ssl_context = create_default_context()
-    ssl_context.options |= OP_NO_TLSv1
-    ssl_context.options |= OP_NO_TLSv1_1
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = CERT_NONE
+    LOGGER.warning("completely vulnerable to hacking or spying on the connection because SSL verification is being deliberately turned off")
 
     connection = Connect(proxy_endpoint, ssl=ssl_context)
 
