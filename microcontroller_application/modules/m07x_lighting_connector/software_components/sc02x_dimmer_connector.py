@@ -25,12 +25,12 @@ async def run(
         # Initialize PWM
         pwm_pin = 17
         GPIO.setup(pwm_pin, GPIO.OUT)
-        pwm = GPIO.PWM(pwm_pin, 600)  # 960 Hz pwm
+        pwm = GPIO.PWM(pwm_pin, 600)
 
         async for message in from_control:
-            duty_cycle = message.duty_cycle
+            duty_cycle = message.duty_cycle * 100
 
-            LOGGER.info("setting light to %f", duty_cycle)
+            LOGGER.info("setting light to %f%%", duty_cycle)
             pwm.start(duty_cycle)
 
     else:
