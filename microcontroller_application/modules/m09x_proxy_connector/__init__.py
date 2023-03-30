@@ -15,7 +15,10 @@ sends them to the appropriate module
 
 from asyncio import gather
 from io import BytesIO
-from ssl import CERT_NONE, OP_NO_TLSv1, OP_NO_TLSv1_1, Purpose, create_default_context
+from ssl import (
+    PROTOCOL_TLSv1_2,
+    SSLContext,
+)
 
 import bounded_channel
 from msgpack import dumps, loads
@@ -146,11 +149,7 @@ async def manage_connection(
 
     # Work around
     # ssl.SSLError: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1123)
-    ssl_context = create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = CERT_NONE
-    LOGGER.warning("completely vulnerable to hacking or spying on the connection because SSL verification is being deliberately turned off")
-
+    ssl_context = SSLContext(PROTOCOL_TLSv1_2)
     connection = Connect(proxy_endpoint, ssl=ssl_context)
 
     async with connection as client_protocol:
