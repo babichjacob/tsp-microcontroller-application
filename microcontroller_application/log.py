@@ -21,7 +21,7 @@ RED = "\x1b[31;20m"
 BOLD_RED = "\x1b[31;1m"
 RESET = "\x1b[0m"
 
-BASE_FORMAT = f"[%(fmttime)s] {{color_start}}%(levelname)-8s{{color_end}} %(pathline)s\n{{color_start}}%(message)s{{color_end}}"
+BASE_FORMAT = f"[%(fmttime)s] {{color_start}}%(levelname)-8s{{color_end}} %(pathline)s\n{{color_start}}%(message)s{{color_end}}\n"
 
 FORMATS = {
     logging.DEBUG: BASE_FORMAT.format(color_start=GREY, color_end=RESET),
