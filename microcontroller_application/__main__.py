@@ -20,7 +20,7 @@ from .modules import (
 )
 
 PROXY_ENDPOINT = "wss://150.230.176.164.nip.io/microcontroller"
-MICROCONTROLLER_ID = "rpi_b4yw87u789ejhdu"
+MICROCONTROLLER_ID = "system-number-1"
 
 
 async def main():
