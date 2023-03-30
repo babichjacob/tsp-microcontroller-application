@@ -181,19 +181,32 @@ async def main():
         get_current_time=get_current_time,
     )
 
-    m09x_proxy_connector_task = m09x_proxy_connector.run(
-        from_aggregation_camera_frame=i02_camera_frame_receiver,
-        from_aggregation_duty_cycle=i02_duty_cycle_receiver,
-        from_person_identification=i09_receiver,
-        from_preferences=i01_1_receiver,
-        to_aggregation_camera_feed_interest=i16_camera_feed_interest_sender,
-        to_aggregation_record_the_camera=i16_record_the_camera_sender,
-        to_aggregation_request_duty_cycle=i16_request_duty_cycle_sender,
-        to_person_identification=i08_sender,
-        to_preferences=i01_2_sender,
-        microcontroller_id=MICROCONTROLLER_ID,
-        proxy_endpoint=PROXY_ENDPOINT,
-    )
+    enable_proxy_connector = getenv("ENABLE_PROXY_CONNECTOR", "True")
+    if enable_proxy_connector not in {"False", "True"}:
+        raise ValueError(
+            f"ENABLE_PROXY_CONNECTOR is {enable_proxy_connector!r} "
+            "but it needs to be False or True exactly"
+        )
+
+    if enable_proxy_connector == "True":
+        m09x_proxy_connector_task = m09x_proxy_connector.run(
+            from_aggregation_camera_frame=i02_camera_frame_receiver,
+            from_aggregation_duty_cycle=i02_duty_cycle_receiver,
+            from_person_identification=i09_receiver,
+            from_preferences=i01_1_receiver,
+            to_aggregation_camera_feed_interest=i16_camera_feed_interest_sender,
+            to_aggregation_record_the_camera=i16_record_the_camera_sender,
+            to_aggregation_request_duty_cycle=i16_request_duty_cycle_sender,
+            to_person_identification=i08_sender,
+            to_preferences=i01_2_sender,
+            microcontroller_id=MICROCONTROLLER_ID,
+            proxy_endpoint=PROXY_ENDPOINT,
+        )
+    else:
+        # Create a task that does nothing in its place
+        from asyncio import sleep
+
+        m09x_proxy_connector_task = sleep(0)
 
     # End of creating module tasks
 
