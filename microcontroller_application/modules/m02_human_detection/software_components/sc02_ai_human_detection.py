@@ -343,6 +343,8 @@ async def do_human_detection_when_triggered(
 ):
     while True:
         await requested_human_detection.wait()
+        LOGGER.info("performing human detection once an image is received from the camera...")
+
         # This is expected to finish immediately in most situations
         message_option = (
             await from_environment_camera_frame.recv()
@@ -360,6 +362,8 @@ async def do_human_detection_when_triggered(
         # Tasks are cooperatively scheduled, so diligence like this is needed.
         images_of_humans = await to_thread(do_human_detection, image)
         # do_human_detection is defined in the next code sample
+
+        LOGGER.info("human detection results: %r", images_of_humans)
 
         # events remain set until cleared
         requested_human_detection.clear()
