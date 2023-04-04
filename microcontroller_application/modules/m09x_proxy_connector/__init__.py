@@ -15,10 +15,6 @@ sends them to the appropriate module
 
 from asyncio import gather
 from io import BytesIO
-from ssl import (
-    PROTOCOL_TLSv1_2,
-    SSLContext,
-)
 
 import bounded_channel
 from msgpack import dumps, loads
