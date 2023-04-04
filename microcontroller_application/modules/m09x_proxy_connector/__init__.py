@@ -147,10 +147,7 @@ async def manage_connection(
 ):
     LOGGER.debug("start of managing connection")
 
-    # Work around
-    # ssl.SSLError: [SSL: TLSV1_ALERT_INTERNAL_ERROR] tlsv1 alert internal error (_ssl.c:1123)
-    ssl_context = SSLContext(PROTOCOL_TLSv1_2)
-    connection = Connect(proxy_endpoint, ssl=ssl_context)
+    connection = Connect(proxy_endpoint)
 
     async with connection as client_protocol:
         LOGGER.debug("%r as %r", connection, client_protocol)
