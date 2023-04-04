@@ -19,7 +19,7 @@ from .modules import (
     m09x_proxy_connector,
 )
 
-PROXY_ENDPOINT = "wss://150.230.176.164.nip.io/microcontroller"
+PROXY_ENDPOINT = "ws://150.230.176.164.nip.io/microcontroller"
 MICROCONTROLLER_ID = "system-number-1"
 
 
