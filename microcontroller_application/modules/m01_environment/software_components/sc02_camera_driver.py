@@ -52,7 +52,7 @@ async def run(
             frame = np.empty((height, width, 3), dtype=np.uint8)
             camera.capture(frame, "rgb")
 
-            LOGGER.info("captured camera frame %r", frame)
+            LOGGER.info("captured camera frame")
 
             await at_least_one(
                 [

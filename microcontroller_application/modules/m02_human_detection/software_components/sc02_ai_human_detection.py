@@ -195,16 +195,13 @@ async def do_human_detection_when_triggered(
 
 
 def do_human_detection(hog, image: np.ndarray) -> list[np.ndarray]:
-    LOGGER.error(
-        "was supposed to do human detection on %r but this is not implemented yet",
-        image,
-    )
-
     boxes, weights = hog.detectMultiScale(image, winStride=(8, 8))
 
     LOGGER.debug("%s, %s", boxes, weights)
 
     rectangles = np.array([[x, y, x + w, y + h] for (x, y, w, h) in boxes])
+
+    LOGGER.debug("found people in %s", rectangles)
 
     people_images = []
 
