@@ -86,6 +86,7 @@ async def run(
     convert_from_aggregation_camera_frame_task = convert_from_aggregation_camera_frame(
         from_aggregation_camera_frame, converted_microcontroller_messages_sender
     )
+
     convert_from_aggregation_duty_cycle_task = convert_from_aggregation_duty_cycle(
         from_aggregation_duty_cycle,
         converted_microcontroller_messages_sender,
@@ -113,6 +114,7 @@ async def run(
         to_aggregation_request_duty_cycle=to_aggregation_request_duty_cycle,
         to_person_identification=to_person_identification,
         to_preferences=to_preferences,
+        bad_form_to_proxy=converted_microcontroller_messages_sender,
     )
 
     manage_connection_task = manage_connection(
@@ -146,30 +148,9 @@ async def manage_connection(
     connection = Connect(proxy_endpoint)
 
     async with connection as client_protocol:
-        LOGGER.debug("%r as %r", connection, client_protocol)
-
-        registration_message = {
-            "Register": {
-                "microcontroller_id": microcontroller_id,
-            }
-        }
-
-        encoded_registration_message = dumps(registration_message)
-        if encoded_registration_message is None:
-            raise RuntimeError(f"{registration_message} encoded as None somehow?!")
-
-        LOGGER.info("registering as %s", microcontroller_id)
-        await client_protocol.send(encoded_registration_message)
-
-        encoded_message_back = await client_protocol.recv()
-        message_back = loads(encoded_message_back)
-
-        if message_back != "UsersAreOffline":
-            raise RuntimeError(
-                f"could not register with the proxy; got {message_back} instead"
-            )
-
-        LOGGER.info("registered as %s", microcontroller_id)
+        await do_registration_sequence(
+            client_protocol=client_protocol, microcontroller_id=microcontroller_id
+        )
 
         await gather(
             producer(
@@ -183,6 +164,35 @@ async def manage_connection(
         )
 
     LOGGER.debug("end of managing connection")
+
+
+async def do_registration_sequence(
+    *,
+    client_protocol: WebSocketClientProtocol,
+    microcontroller_id: str,
+):
+    registration_message = {
+        "Register": {
+            "microcontroller_id": microcontroller_id,
+        }
+    }
+
+    encoded_registration_message = dumps(registration_message)
+    if encoded_registration_message is None:
+        raise RuntimeError(f"{registration_message} encoded as None somehow?!")
+
+    LOGGER.info("registering as %s", microcontroller_id)
+    await client_protocol.send(encoded_registration_message)
+
+    encoded_message_back = await client_protocol.recv()
+    message_back = loads(encoded_message_back)
+
+    if message_back != "UsersAreOffline":
+        raise RuntimeError(
+            f"could not register with the proxy; got {message_back} instead"
+        )
+
+    LOGGER.info("registered as %s", microcontroller_id)
 
 
 async def producer(
@@ -346,12 +356,37 @@ async def convert_from_proxy(
     ],
     to_person_identification: bounded_channel.Sender[FromProxyToPersonIdentification],
     to_preferences: bounded_channel.Sender[FromProxyToPreferences],
+    bad_form_to_proxy: bounded_channel.Sender[FromMicrocontrollerToProxy],
 ):
     async for message in converted_proxy_messages_receiver:
         LOGGER.debug("got %r", message)
 
         if message == "UsageError":
             raise RuntimeError("usage error when communicating with the proxy")
+
+        # This should've been its own software component, or something, but oh well, it's too late
+        if "LoginRequest" in message:
+            [login_info, user_id] = message["LoginRequest"]
+
+            [username, password] = login_info
+
+            # username = login_info["username"]
+            # password = login_info["password"]
+
+            if username == "jacob" and password == "password":
+                LOGGER.info(
+                    "%s just signed in as %s with %s", user_id, username, password
+                )
+
+                response = {"LoginResponse": [True, user_id]}
+            else:
+                LOGGER.info(
+                    "%s failed to sign in as %s with %s", user_id, username, password
+                )
+
+                response = {"LoginResponse": [False, user_id]}
+
+            (await bad_form_to_proxy.send(response)).expect("no receiver")
 
         if "Command" in message:
             command = message["Command"]
