@@ -39,10 +39,15 @@ async def run(
     async for message in from_proxy_add_new_user:
         user_slot = message.user_slot
 
+        LOGGER.info(
+            "going to add the %d trusted user from current camera info", user_slot
+        )
+
         current_humans = (await from_human_detection.recv()).unwrap()
         images_of_humans = current_humans.images_of_humans
 
         if len(images_of_humans) != 1:
+            LOGGER.warning("no humans were in frame though")
             continue
 
         # It’s a list, but we know it has one entry (one human),
@@ -54,6 +59,7 @@ async def run(
         )
 
         if len(face_encodings) != 1:
+            LOGGER.warning("no faces were in frame though")
             continue
 
         # It’s a list, but we know it has one entry (one face),
@@ -71,5 +77,11 @@ async def run(
             writer.writerow(face_encoding_as_list)
 
         user_face_encodings[user_slot].append(face_encoding_as_list)
+
+        LOGGER.info(
+            "saved %r as a face encoding for the %d trusted user",
+            face_encoding_as_list,
+            user_slot,
+        )
 
     LOGGER.debug("shutdown")
