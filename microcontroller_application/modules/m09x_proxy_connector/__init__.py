@@ -32,6 +32,7 @@ from microcontroller_application.interfaces.message_types import (
     FromProxyToAggregationRequestDutyCycle,
     FromProxyToPersonIdentification,
     FromProxyToPreferences,
+    UserSlot,
 )
 from microcontroller_application.log import get_logger
 
@@ -364,34 +365,65 @@ async def convert_from_proxy(
         if message == "UsageError":
             raise RuntimeError("usage error when communicating with the proxy")
 
-        # This should've been its own software component, or something, but oh well, it's too late
-        if "LoginRequest" in message:
-            [login_info, user_id] = message["LoginRequest"]
+        if isinstance(message, dict):
 
-            [username, password] = login_info
+            # This should've been its own software component, or something, but oh well, it's too late
+            if "LoginRequest" in message:
+                [login_info, user_id] = message["LoginRequest"]
 
-            # username = login_info["username"]
-            # password = login_info["password"]
+                [username, password] = login_info
 
-            if username == "jacob" and password == "password":
-                LOGGER.info(
-                    "%s just signed in as %s with %s", user_id, username, password
-                )
+                # username = login_info["username"]
+                # password = login_info["password"]
 
-                response = {"LoginResponse": [True, user_id]}
-            else:
-                LOGGER.info(
-                    "%s failed to sign in as %s with %s", user_id, username, password
-                )
+                if username == "jacob" and password == "password":
+                    LOGGER.info(
+                        "%s just signed in as %s with %s", user_id, username, password
+                    )
 
-                response = {"LoginResponse": [False, user_id]}
+                    response = {"LoginResponse": [True, user_id]}
+                else:
+                    LOGGER.info(
+                        "%s failed to sign in as %s with %s",
+                        user_id,
+                        username,
+                        password,
+                    )
 
-            (await bad_form_to_proxy.send(response)).expect("no receiver")
+                    response = {"LoginResponse": [False, user_id]}
 
-        if "Command" in message:
-            command = message["Command"]
+                (await bad_form_to_proxy.send(response)).expect("no receiver")
 
-            LOGGER.error("TODO: switch / if / elif on the message contents")
+            if "Command" in message:
+                [command, user_id] = message["Command"]
+
+                LOGGER.error("TODO: switch / if / elif on the message contents")
+
+                if "AddNewTrustedUser" in command:
+                    add_new_trusted_user = command["AddNewTrustedUser"]
+                    user_slot: int = add_new_trusted_user["user_slot"]
+
+                    user_slot_as_enum = UserSlot(user_slot)
+
+                    converted_message = FromProxyToPersonIdentification(
+                        user_slot=user_slot_as_enum
+                    )
+
+                    await to_person_identification.send(converted_message)
+
+                if "CameraFeedInterest" in command:
+                    camera_feed_interest = command["CameraFeedInterest"]
+                    wants_camera_feed = camera_feed_interest["wants_camera_feed"]
+
+                    converted_message = FromProxyToAggregationCameraFeedInterest(
+                        wants_camera_feed=wants_camera_feed,
+                        user_id=user_id,
+                    )
+
+                    await to_aggregation_camera_feed_interest.send(converted_message)
+
+        else:
+            LOGGER.error("received %r but am not programmed to handle it", message)
 
         # (
         #     await to_aggregation_camera_feed_interest.send(converted_message_dataclass)

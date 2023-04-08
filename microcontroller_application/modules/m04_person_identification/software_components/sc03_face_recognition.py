@@ -3,14 +3,15 @@ Module: 04. Person identification
 Component: 03. Face recognition
 """
 
-from asyncio import gather, to_thread
 import csv
+from asyncio import gather, to_thread
 from pathlib import Path
 
 import bounded_channel
 import face_recognition
 import numpy as np
 from option_and_result import NONE, Option, Some
+from store import Writable
 
 from microcontroller_application.interfaces.message_types import (
     FromHumanDetectionToPersonIdentification,
@@ -28,13 +29,13 @@ async def run(
         FromHumanDetectionToPersonIdentification
     ],
     to_control: bounded_channel.Sender[FromPersonIdentificationToControl],
+    identified_people_store: Writable[list[Option[UserSlot]], None],
     trusted_users_folder: Path,
+    user_face_encodings: dict[UserSlot, list[list[float]]],
 ):
     "Run the face recognition component"
 
     LOGGER.debug("startup")
-
-    user_face_encodings: dict[UserSlot, list[float]] = {}
 
     for user_slot in UserSlot:
         # Open in read mode
@@ -68,6 +69,8 @@ async def run(
 
         LOGGER.debug(f"figured out {people=}")
 
+        identified_people_store.set(people)
+
         await to_control.send(
             FromPersonIdentificationToControl(identified_people=people)
         )
@@ -77,7 +80,7 @@ async def run(
 
 async def find_matching_face(
     image_of_person: np.ndarray,
-    user_face_encodings: dict[UserSlot, list[float]] = {},
+    user_face_encodings: dict[UserSlot, list[list[float]]] = {},
 ) -> Option[UserSlot]:
     this_image_face_encodings = await to_thread(
         face_recognition.face_encodings, image_of_person

@@ -198,7 +198,11 @@ class FromPreferencesToControl:
 
 
 # Interface 08
-FromProxyToPersonIdentification = Any
+@dataclass
+class FromProxyToPersonIdentification:
+    "Add a new trusted user"
+
+    user_slot: UserSlot
 
 # Interface 09
 @dataclass

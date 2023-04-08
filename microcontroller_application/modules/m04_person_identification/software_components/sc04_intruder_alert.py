@@ -7,6 +7,7 @@ Component: 04. Intruder alert
 from asyncio import get_event_loop
 from datetime import datetime, timedelta
 from typing import Callable
+
 import bounded_channel
 from option_and_result import NONE, Option
 from store import Readable
@@ -17,6 +18,7 @@ from microcontroller_application.interfaces.message_types import (
     UserSlot,
 )
 from microcontroller_application.log import get_logger
+from utils.stores import values
 
 LOGGER = get_logger(__name__)
 
@@ -32,7 +34,7 @@ async def run(
 
     LOGGER.debug("startup")
 
-    countdown = NONE()
+    countdown_option = NONE()
 
     async def send_to_proxy_and_aggregation(data):
         camera_image, timestamp = data
@@ -50,7 +52,10 @@ async def run(
         )
 
     def intruder_alert(data):
-        countdown.cancel()
+        if countdown_option.is_some():
+            countdown = countdown_option.unwrap()
+            countdown.cancel()
+
         # If this isn’t called again for 1 minute,
         # then the notification will be sent
 
@@ -60,12 +65,15 @@ async def run(
             send_to_proxy_and_aggregation,  # function
             (data,),  # arguments to the function
         )
+        countdown_option.insert(countdown)
 
     async for identified_people in values(identified_people_store):
         if any(identification.is_some() for identification in identified_people):
             # If an intruder alert was pending, cancel it, because a trusted person is in frame
             # (explained in the next code sample)
-            countdown.cancel()
+            if countdown_option.is_some():
+                countdown = countdown_option.unwrap()
+                countdown.cancel()
 
         # There’s an intruder if there’s a None variant in the list returned
         # But if there’s a recognized person in frame, then they are already
@@ -73,6 +81,7 @@ async def run(
         # (maybe they’re a friend the system wasn’t trained to recognize)
         # then there’s no reason to alert them
         elif any(identification.is_none() for identification in identified_people):
+            timestamp = get_current_time()
             # Recall this function is debounced to prevent repeat notifications
             intruder_alert((camera_image, timestamp))
 

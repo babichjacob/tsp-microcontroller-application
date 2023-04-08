@@ -84,6 +84,10 @@ async def main():
 
     # End of creating interfaces
 
+    history_folder = Path("app-history")
+
+    get_current_time = datetime.now
+
     # Start of creating module tasks
 
     randomize_environment_module = getenv("RANDOMIZE_ENVIRONMENT_MODULE", "False")
@@ -124,6 +128,7 @@ async def main():
         to_proxy=i09_sender,
         to_control=i06_sender,
         trusted_users_folder=trusted_users_folder,
+        get_current_time=get_current_time,
     )
 
     m05_preferences_task = m05_preferences.run(
@@ -161,10 +166,6 @@ async def main():
         from_control=ih2_receiver,
         use_real_hardware=enable_lighting_hardware == "True",
     )
-
-    history_folder = Path("app-history")
-
-    get_current_time = datetime.now
 
     m08_aggregation_task = m08_aggregation.run(
         from_person_identification=i10_receiver,
