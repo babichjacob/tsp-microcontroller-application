@@ -236,7 +236,7 @@ async def consumer(
 
 def image_to_bytes(image: Image) -> bytes:
     image_bytes_io = BytesIO()
-    image.save(image_bytes_io, format="JPG", quality=50)
+    image.save(image_bytes_io, format="jpeg", quality=50)
     image_bytes = image_bytes_io.getvalue()
 
     return image_bytes
