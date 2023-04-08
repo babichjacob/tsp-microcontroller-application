@@ -401,7 +401,7 @@ async def convert_from_proxy(
 
                 if "AddNewTrustedUser" in command:
                     add_new_trusted_user = command["AddNewTrustedUser"]
-                    user_slot: int = add_new_trusted_user["user_slot"]
+                    [user_slot] = add_new_trusted_user
 
                     user_slot_as_enum = UserSlot(user_slot)
 
@@ -413,7 +413,7 @@ async def convert_from_proxy(
 
                 if "CameraFeedInterest" in command:
                     camera_feed_interest = command["CameraFeedInterest"]
-                    wants_camera_feed = camera_feed_interest["wants_camera_feed"]
+                    [wants_camera_feed] = camera_feed_interest
 
                     converted_message = FromProxyToAggregationCameraFeedInterest(
                         wants_camera_feed=wants_camera_feed,
