@@ -10,9 +10,8 @@ from asyncio import sleep
 import bounded_channel
 import numpy as np
 
-from microcontroller_application.interfaces.message_types import (
-    FromEnvironmentToControl,
-)
+from microcontroller_application.interfaces.message_types import \
+    FromEnvironmentToControl
 from microcontroller_application.log import get_logger
 
 LOGGER = get_logger(__name__)
@@ -24,6 +23,9 @@ async def run(
     use_randomized_data: bool,
 ):
     LOGGER.debug("startup")
+    
+    # This is just an approximation
+    lux_to_lumens_conversion_factor = (800 / 170)
 
     if use_randomized_data:
         LOGGER.warning("using randomized data")
@@ -33,8 +35,7 @@ async def run(
 
             LOGGER.info("(RANDOM) lux: %f", lux)
 
-            # This is just an approximation
-            as_lumens = lux * (600 / 20000)
+            as_lumens = lux *lux_to_lumens_conversion_factor
 
             await to_control.send(
                 FromEnvironmentToControl(ambient_brightness=as_lumens)
@@ -43,9 +44,9 @@ async def run(
             await sleep(1)
 
     else:
+        import adafruit_tsl2591
         import board
         import busio
-        import adafruit_tsl2591
 
         i2c = busio.I2C(board.SCL, board.SDA)
 
@@ -56,8 +57,7 @@ async def run(
 
             LOGGER.info("lux: %f", lux)
 
-            # This is just an approximation
-            as_lumens = lux * (600 / 20000)
+            as_lumens = lux * lux_to_lumens_conversion_factor
 
             await to_control.send(
                 FromEnvironmentToControl(ambient_brightness=as_lumens)

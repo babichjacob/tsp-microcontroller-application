@@ -40,48 +40,60 @@ async def run(
         user_slot = message.user_slot
 
         LOGGER.info(
-            "going to add the %d trusted user from current camera info", user_slot
+            "going to add the %r trusted user from current camera info", user_slot
         )
 
-        current_humans = (await from_human_detection.recv()).unwrap()
-        images_of_humans = current_humans.images_of_humans
+        limit = 30
 
-        if len(images_of_humans) != 1:
-            LOGGER.warning("no humans were in frame though")
-            continue
+        for attempt in range(limit):
+            LOGGER.debug("on attempt %d", attempt)
 
-        # It’s a list, but we know it has one entry (one human),
-        # so get the one and only element
-        image_of_person = images_of_humans[0]
+            current_humans = (await from_human_detection.recv()).unwrap()
+            images_of_humans = current_humans.images_of_humans
 
-        face_encodings = await to_thread(
-            face_recognition.face_encodings, image_of_person
-        )
+            number_of_humans = len(images_of_humans)
+            if number_of_humans != 1:
+                LOGGER.warning("%d humans were in frame though", number_of_humans)
+                continue
 
-        if len(face_encodings) != 1:
-            LOGGER.warning("no faces were in frame though")
-            continue
+            # It’s a list, but we know it has one entry (one human),
+            # so get the one and only element
+            image_of_person = images_of_humans[0]
 
-        # It’s a list, but we know it has one entry (one face),
-        # so get the one and only element
-        face_encoding = face_encodings[0]
+            LOGGER.debug("now looking for faces")
+            face_encodings = await to_thread(
+                face_recognition.face_encodings, image_of_person
+            )
 
-        face_encoding_as_list: list[float] = list(face_encoding)
+            number_of_faces = len(face_encodings)
+            if number_of_faces != 1:
+                LOGGER.warning("%d faces were in frame though", number_of_faces)
+                continue
 
-        # Open in append mode
-        with open(
-            trusted_users_folder / str(user_slot) / "face.csv", "a", encoding="utf8"
-        ) as face_file:
-            writer = csv.writer(face_file)
+            # It’s a list, but we know it has one entry (one face),
+            # so get the one and only element
+            face_encoding = face_encodings[0]
 
-            writer.writerow(face_encoding_as_list)
+            face_encoding_as_list: list[float] = list(face_encoding)
 
-        user_face_encodings[user_slot].append(face_encoding_as_list)
+            # Open in append mode
+            with open(
+                trusted_users_folder / str(user_slot) / "face.csv", "a", encoding="utf8"
+            ) as face_file:
+                writer = csv.writer(face_file)
 
-        LOGGER.info(
-            "saved %r as a face encoding for the %d trusted user",
-            face_encoding_as_list,
-            user_slot,
-        )
+                writer.writerow(face_encoding_as_list)
+
+            user_face_encodings[user_slot].append(face_encoding_as_list)
+
+            LOGGER.info(
+                "saved %r as a face encoding for the %d trusted user",
+                face_encoding_as_list,
+                user_slot,
+            )
+
+            break
+        else:
+            LOGGER.error("failed to ever find a human")
 
     LOGGER.debug("shutdown")

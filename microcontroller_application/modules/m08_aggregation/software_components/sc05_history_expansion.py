@@ -127,11 +127,13 @@ async def run(
                     TimelineEventIntruder(time=time, intruder_alert=intruder_alert),
                 ),
             )
-        
+
         timeline_just_events = [event for (hour, minute, second, event) in timeline]
 
         await to_proxy.send(
-            FromAggregationToProxyHistory(user_id=message.user_id, timeline=timeline_just_events)
+            FromAggregationToProxyHistory(
+                user_id=message.user_id, timeline=timeline_just_events
+            )
         )
 
     LOGGER.debug("shutdown")

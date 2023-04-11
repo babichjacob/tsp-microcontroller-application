@@ -32,6 +32,7 @@ async def run(
     identified_people_store: Writable[list[Option[UserSlot]], None],
     trusted_users_folder: Path,
     user_face_encodings: dict[UserSlot, list[list[float]]],
+    use_demo_data: bool,
 ):
     "Run the face recognition component"
 
@@ -58,16 +59,28 @@ async def run(
             )
 
     async for message in from_human_detection:
-        LOGGER.debug(f"received {message=}")
+        LOGGER.debug("received %r", message)
 
-        people = await gather(
-            *[
-                find_matching_face(image, user_face_encodings)
-                for image in message.images_of_humans
-            ]
-        )
+        if use_demo_data:
+            number_of_humans = len(message.images_of_humans)
 
-        LOGGER.debug(f"figured out {people=}")
+            if number_of_humans == 0:
+                people = []
+            elif number_of_humans == 1:
+                people = [Some(UserSlot.TWO)]
+            elif number_of_humans == 2:
+                people = [Some(UserSlot.TWO), NONE()]
+            else:
+                people = [NONE() for _ in range(number_of_humans)]
+        else:
+            people = await gather(
+                *[
+                    find_matching_face(image, user_face_encodings)
+                    for image in message.images_of_humans
+                ]
+            )
+
+        LOGGER.debug("figured out %r", people)
 
         identified_people_store.set(people)
 
@@ -97,7 +110,7 @@ async def find_matching_face(
                 this_image_face_encoding,
             )
 
-            LOGGER.debug(f"{matches=} for {trusted_user=}")
+            LOGGER.debug("%r for %r", matches, trusted_user)
 
             if any(matches):
                 return Some(trusted_user)

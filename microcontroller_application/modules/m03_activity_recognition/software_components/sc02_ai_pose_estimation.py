@@ -28,7 +28,6 @@ async def run(
 
     async for message in from_human_detection:
         humans = message.images_of_humans
-        LOGGER.warning("this hasn't been programmed yet, so it doesn't do anything")
 
         activities_of_humans = [Activity.NEITHER for _human in humans]
 
