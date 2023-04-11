@@ -189,12 +189,13 @@ def calculate_brightness_for_user(
 
     effect = corresponding_timer.effect
 
-    LOGGER.debug("%r is the type of effect", type(effect))
+    type_of_effect = type(effect)
+    LOGGER.debug("%r is the type of effect", type_of_effect)
 
-    if isinstance(effect, LightEffectForceEndBrightness):
+    if type_of_effect is LightEffectForceEndBrightness:
         exact_lumens = effect.lumens
         return exact_lumens
-    elif isinstance(effect, LightEffectDesiredBrightness):
+    elif type_of_effect is LightEffectDesiredBrightness:
         desired_lumens = effect.lumens
 
         if activity == Activity.WORKING:
