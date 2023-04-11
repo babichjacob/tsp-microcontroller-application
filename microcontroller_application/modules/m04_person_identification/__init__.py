@@ -57,6 +57,7 @@ async def run(
         trusted_users_folder=trusted_users_folder,
         user_face_encodings=user_face_encodings,
         identified_people_store=identified_people_store,
+        use_demo_data=True,
     )
 
     sc04_intruder_alert_task = sc04_intruder_alert.run(
