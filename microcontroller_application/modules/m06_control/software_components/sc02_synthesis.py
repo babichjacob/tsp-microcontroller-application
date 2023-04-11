@@ -202,6 +202,8 @@ def calculate_brightness_for_user(
             # Ensure there’s at least 300 lumens of light
             # being emitted to work with
             desired_lumens += 300
+
+            return desired_lumens
         elif activity == Activity.LYING:
             # Make it up to 300 lumens (about 50%) darker
             # to make it easier to relax and sleep
