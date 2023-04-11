@@ -181,9 +181,9 @@ def calculate_brightness_for_user(
         (timer.weekday, timer.hour, timer.minute) for timer in preferences.timers
     ]
     # Finds the schedule entry that starts before now
-    corresponding_timer_index = bisect_left(
-        timer_tuples, (now.weekday(), now.hour, now.minute)
-    ) - 1
+    corresponding_timer_index = (
+        bisect_left(timer_tuples, (now.weekday(), now.hour, now.minute)) - 1
+    )
 
     corresponding_timer = preferences.timers[corresponding_timer_index]
 
@@ -205,31 +205,26 @@ def calculate_brightness_for_user(
             # being emitted to work with
             desired_lumens += 300
 
-            return desired_lumens
         elif activity == Activity.LYING:
             # Make it up to 300 lumens (about 50%) darker
             # to make it easier to relax and sleep
             desired_lumens -= 300
             # Better values may be found from experimentation
 
-            difference_between_desired_and_ambient = (
-                desired_lumens - ambient_light_lumens
-            )
+        difference_between_desired_and_ambient = desired_lumens - ambient_light_lumens
 
-            if difference_between_desired_and_ambient < 0:
-                # If it’s bright enough (according to the ambient light sensor)
-                # it should be off
-                return 0
+        if difference_between_desired_and_ambient < 0:
+            # If it’s bright enough (according to the ambient light sensor)
+            # it should be off
+            return 0
 
-            # Only a maximum of 600 lumens can be emitted per requirements
-            elif difference_between_desired_and_ambient > 600:
-                return 600
+        # Only a maximum of 600 lumens can be emitted per requirements
+        elif difference_between_desired_and_ambient > 600:
+            return 600
 
-            # This represents a non-full and non-off amount of light
-            # (between 0% to 100% duty cycle)
-            return difference_between_desired_and_ambient
-
-        return desired_lumens
+        # This represents a non-full and non-off amount of light
+        # (between 0% to 100% duty cycle)
+        return difference_between_desired_and_ambient
 
     raise RuntimeError("unreachable")
 
