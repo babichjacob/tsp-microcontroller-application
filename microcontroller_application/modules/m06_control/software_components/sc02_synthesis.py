@@ -185,6 +185,8 @@ def calculate_brightness_for_user(
 
     corresponding_timer = preferences.timers[corresponding_timer_index]
 
+    LOGGER.debug("%r is the currently active timer", corresponding_timer)
+
     if isinstance(corresponding_timer.effect, LightEffectForceEndBrightness):
         exact_lumens = corresponding_timer.effect.lumens
         return exact_lumens
