@@ -19,7 +19,7 @@ That resulting brightness value is given to the aggregation module
 
 
 from asyncio import gather, get_event_loop, sleep
-from bisect import bisect
+from bisect import bisect, bisect_left
 from datetime import datetime, timedelta
 
 import bounded_channel
@@ -179,7 +179,7 @@ def calculate_brightness_for_user(
         (timer.weekday, timer.hour, timer.minute) for timer in preferences.timers
     ]
     # Finds the schedule entry that starts before now
-    corresponding_timer_index = bisect(
+    corresponding_timer_index = bisect_left(
         timer_tuples, (now.weekday(), now.hour, now.minute)
     )
 
@@ -187,11 +187,15 @@ def calculate_brightness_for_user(
 
     LOGGER.debug("%r is the currently active timer", corresponding_timer)
 
-    if isinstance(corresponding_timer.effect, LightEffectForceEndBrightness):
-        exact_lumens = corresponding_timer.effect.lumens
+    effect = corresponding_timer.effect
+
+    LOGGER.debug("%r is the type of effect", type(effect))
+
+    if isinstance(effect, LightEffectForceEndBrightness):
+        exact_lumens = effect.lumens
         return exact_lumens
-    elif isinstance(corresponding_timer.effect, LightEffectDesiredBrightness):
-        desired_lumens = corresponding_timer.effect.lumens
+    elif isinstance(effect, LightEffectDesiredBrightness):
+        desired_lumens = effect.lumens
 
         if activity == Activity.WORKING:
             # Ensure there’s at least 300 lumens of light
