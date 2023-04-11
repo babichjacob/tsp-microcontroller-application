@@ -155,15 +155,17 @@ def synthesize_if_initialized(
 
         now = datetime.now()
 
-        return Some(
-            calculate_synthesized_light_brightness(
-                activities=activities,
-                ambient_light_lumens=ambient_brightness,
-                now=now,
-                people_in_room=identified_people,
-                user_preferences=preferences,
-            )
+        synthesized_light_brightness = calculate_synthesized_light_brightness(
+            activities=activities,
+            ambient_light_lumens=ambient_brightness,
+            now=now,
+            people_in_room=identified_people,
+            user_preferences=preferences,
         )
+
+        LOGGER.info("synthesized_light_brightness: %r", synthesized_light_brightness)
+
+        return Some(synthesized_light_brightness)
 
     return NONE()
 
@@ -226,7 +228,7 @@ def calculate_brightness_for_user(
             # This represents a non-full and non-off amount of light
             # (between 0% to 100% duty cycle)
             return difference_between_desired_and_ambient
-        
+
         return desired_lumens
 
     raise RuntimeError("unreachable")
@@ -282,7 +284,5 @@ def calculate_synthesized_light_brightness(
         brightnesses.append(brightness)
 
     average_brightness = average(brightnesses).unwrap_or(0)
-
-    LOGGER.info("synthesized light brightness: %r", average_brightness)
 
     return average_brightness
