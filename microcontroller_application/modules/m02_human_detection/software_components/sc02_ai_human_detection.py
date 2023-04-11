@@ -193,6 +193,11 @@ async def do_human_detection_when_triggered(
             ]
         )
 
+        # DEMO manipulation
+        if images_of_humans:
+            await sleep(10.0)
+
+
 
 def do_human_detection(hog, image: np.ndarray) -> list[np.ndarray]:
     boxes, weights = hog.detectMultiScale(image, winStride=(8, 8))
