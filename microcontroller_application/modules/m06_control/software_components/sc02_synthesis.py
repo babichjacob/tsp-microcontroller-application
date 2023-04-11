@@ -226,6 +226,8 @@ def calculate_brightness_for_user(
             # This represents a non-full and non-off amount of light
             # (between 0% to 100% duty cycle)
             return difference_between_desired_and_ambient
+        
+        return desired_lumens
 
     raise RuntimeError("unreachable")
 
