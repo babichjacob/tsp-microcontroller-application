@@ -183,7 +183,7 @@ def calculate_brightness_for_user(
     # Finds the schedule entry that starts before now
     corresponding_timer_index = bisect_left(
         timer_tuples, (now.weekday(), now.hour, now.minute)
-    )
+    ) - 1
 
     corresponding_timer = preferences.timers[corresponding_timer_index]
 
