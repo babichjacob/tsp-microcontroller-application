@@ -79,18 +79,18 @@ async def run(
             activities = message.activities_of_humans
             activities_store.set(Some(activities))
 
-    identified_people_store: Writable[
-        Option[list[IdentifiedPerson]], None
-    ] = writable(NONE())
+    identified_people_store: Writable[Option[list[IdentifiedPerson]], None] = writable(
+        NONE()
+    )
 
     async def put_trusted_people_in_store():
         async for message in from_person_identification:
             identified_people = message.identified_people
             identified_people_store.set(Some(identified_people))
 
-    preferences_store: Writable[
-        Option[dict[UserSlot, Preferences]], None
-    ] = writable(NONE())
+    preferences_store: Writable[Option[dict[UserSlot, Preferences]], None] = writable(
+        NONE()
+    )
 
     async def put_preferences_in_store():
         if use_randomized_data:
@@ -116,9 +116,7 @@ async def run(
     )
 
     async def send_synthesized_brightness():
-        async for synthesized_brightness_option in values(
-            synthesized_brightness_store
-        ):
+        async for synthesized_brightness_option in values(synthesized_brightness_store):
 
             if synthesized_brightness_option.is_some():
                 synthesized_brightness = synthesized_brightness_option.unwrap()
@@ -177,10 +175,12 @@ def calculate_brightness_for_user(
     now: datetime,
     preferences: Preferences,
 ) -> float:
-    timer_tuples = [(timer.weekday, timer.hour, timer.minute) for timer in preferences.timers]
+    timer_tuples = [
+        (timer.weekday, timer.hour, timer.minute) for timer in preferences.timers
+    ]
     # Finds the schedule entry that starts before now
     corresponding_timer_index = bisect(
-        timer_tuples, (now.weekday, now.hour, now.minute)
+        timer_tuples, (now.weekday(), now.hour, now.minute)
     )
 
     corresponding_timer = preferences.timers[corresponding_timer_index]
