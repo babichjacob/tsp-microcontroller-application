@@ -135,6 +135,7 @@ async def main():
         from_proxy=i01_2_receiver,
         to_proxy=i01_1_sender,
         to_control=i07_sender,
+        use_demo_data=True, # TODO: use environment variable
     )
 
     randomize_control_module = getenv("RANDOMIZE_CONTROL_MODULE", "False")
