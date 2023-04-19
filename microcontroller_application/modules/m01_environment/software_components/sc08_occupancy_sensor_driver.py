@@ -63,8 +63,8 @@ async def run(
         last_occupancy_detected = NONE()
         while True:
             raw_response = ser.readline()
-            response = raw_response.decode().strip()
-            occupancy_detected = bool(response.find("1"))
+            response = raw_response.strip()
+            occupancy_detected = response.find(b"1") != -1
 
             LOGGER.info("occupancy_detected: %s", occupancy_detected)
 
